@@ -1,0 +1,79 @@
+---
+title: "Assignment 2"
+format: pdf
+editor: visual
+---
+
+```{r, warning=FALSE, message=FALSE}
+#| echo: false
+dat = read.table("Collider_Data_2025.txt", h = TRUE,stringsAsFactors =TRUE)
+dim(dat)
+head(dat)
+#doesn't want the libraries in code
+library(ggplot2)
+library(dplyr)
+library(r2symbols)
+```
+
+# a)
+
+```{r, warning=FALSE, message=FALSE}
+#| echo: true
+dat$response <- apply(dat[, c("Y1", "Y2", "Y3")], 1, function (x){
+  if (x[1] == 1) return("code-Alpha")
+  if (x[2] == 1) return("code-Beta")
+  if (x[3] == 1) return("code-Rho")
+})
+ggplot(dat, aes(x=X1, y=X2, color=response ))+geom_point(size=2)+ggtitle("Scatter plot of Collider Data Feature Space")+ theme_minimal()
+
+
+
+```
+
+The scatter plot shows how the particles are distributed in the X1-X2 plane. We can see that the process creates a complex and non-linear separation in the points plotted. Therefore, the use of a neural network is justified as they are known for their ability to learn non-linear decision boundaries which is presented in the scatter plot.
+
+# b)
+
+```{r, warning=FALSE, message=FALSE}
+#| echo: true
+softmax <-function(z)
+{
+  t(apply(Z, 2, function(z_col){
+    exz <- exp(z_col)
+    exz / sum(exz)
+  }))
+}
+
+
+```
+
+# c)
+
+$$
+\begin{aligned}
+\texttt{calc_Ci <- function(y_true, y_pred) \{}
+&\quad \texttt{if (y_true == 1)\{} \\
+&\qquad \texttt{return(-log(y_pred))} \\
+&\quad \texttt{\}} \\
+&\quad \texttt{else \{} \\
+&\qquad \texttt{return(0)} \\
+&\quad \texttt{\}} \\
+\texttt{\}}
+\end{aligned}
+$$
+
+Evaluating only the component corresponding to the actual class simplifies calculations and enhances numerical stability by avoiding evaluating terms that are known to be 0.
+
+# d)
+
+```{r, warning=FALSE, message=FALSE}
+#| echo: true
+g <- function(Yhat, Y) {
+  # Yhat: predicted probabilities (q x N matrix)
+  # Y: one-hot encoded true labels (q x N matrix)
+  N <- ncol(Y)
+  loss <- -sum(Y * log(Yhat)) / N
+  return(loss)
+}
+
+```
