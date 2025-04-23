@@ -36,13 +36,20 @@ The scatter plot shows how the particles are distributed in the X1-X2 plane. We 
 
 ```{r, warning=FALSE, message=FALSE}
 #| echo: true
-softmax <-function(z)
-{
-  t(apply(Z, 2, function(z_col){
-    exz <- exp(z_col)
-    exz / sum(exz)
-  }))
-}
+softmax <- function(Z) 
+  {
+ 
+  Z_shift <- Z - matrix(apply(Z, 2, max),          # subtract column-wise maxima
+                        nrow = 3, ncol = ncol(Z), 
+                        byrow = TRUE)
+  
+  expZ    <- exp(Z_shift)                          # exponentiate
+  denom   <- matrix(colSums(expZ),                 # column-wise sums
+                    nrow = 3, ncol = ncol(Z), 
+                    byrow = TRUE)
+  
+  expZ / denom                                     # element-wise division
+  }
 
 
 ```
@@ -68,12 +75,81 @@ Evaluating only the component corresponding to the actual class simplifies calcu
 
 ```{r, warning=FALSE, message=FALSE}
 #| echo: true
-g <- function(Yhat, Y) {
-  # Yhat: predicted probabilities (q x N matrix)
-  # Y: one-hot encoded true labels (q x N matrix)
-  N <- ncol(Y)
-  loss <- -sum(Y * log(Yhat)) / N
-  return(loss)
+g <- function(Yhat, Y, eps = 1e-15) {
+  # Yhat, Y : N × q matrices   (rows = obs, cols = classes)
+  N <- nrow(Y)
+  -sum( Y * log( pmax(Yhat, eps) ) ) / N
+}
+
+```
+
+# e)
+
+number of parameters = 2p^2^+2p+2pm+2m+m^2^+mq+q
+
+# f)
+
+```{r, warning=FALSE, message=FALSE}
+#| echo: true
+
+af_forward <- function(X, Y, theta, m, nu)
+{
+  N <- nrow(X)
+  p <- ncol(X)
+  q <- ncol(Y)
+  
+  index <- 1:(2(p^2)) #W1 : p(p+p)
+  W1 <- matrix(theta[index], nrow=p)
+  
+  index <- max(index)+1:(2*p) #b1 : (p+p)
+  b1 <- theta[index]
+  
+  index <- max(index)+1:((2*p)*m) #W2 : (p+p)*m
+  W2 <- matrix(theta[index], nrow=2*p)
+  
+  index <- max(index)+1:m #b2 : m
+  b2 <- theta[index]
+  
+  index <- max(index)+1:(m*m) #W3 : (m*m)
+  W3 <- matrix(theta[index], nrow=m)
+  
+  index <- max(index)+1:m #b3 : m
+  b3 <- theta[index]
+  
+  index <- max(index)+1:(m*q) #W4 : (m*q)
+  W4 <- matrix(theta[index], nrow=m)
+  
+  index <- max(index)+1:q #b4 : q
+  b4 <- theta[index]
+  
+  #softmax function
+  softmax <- function(Z) 
+    {
+  
+  Z_shift <- Z - matrix(apply(Z, 2, max),          # subtract column-wise maxima
+                        nrow = 3, ncol = ncol(Z), 
+                        byrow = TRUE)
+  
+  expZ    <- exp(Z_shift)                          # exponentiate
+  denom   <- matrix(colSums(expZ),                 # column-wise sums
+                    nrow = 3, ncol = ncol(Z), 
+                    byrow = TRUE)
+  
+  expZ / denom                                     # element-wise division
+  }
+  
+  #forward propagation 
+  H1 <- tanh( X  %*% W1 + matrix(b1, N, 2*p, TRUE) )       # aug-layer                           
+  H2 <- tanh( H1 %*% W2 + matrix(b2, N, m, TRUE) )      # 2nd hidden
+  H3 <- tanh(H2 %*% W3 + matrix(b3, N, m, TRUE))
+  Z <- H3 %*% W4 + matrix(b4, N, q, TRUE)          # logits
+  probs <- softmax(Z)                                          # softmax
+
+  #losses & objective  
+  loss <- g(probs, Y)                 # cross-entropy
+  obj  <- loss + (nu / 2) * sum(theta^2)
+  list(probs = probs, loss = loss, obj = obj)
+
 }
 
 ```
