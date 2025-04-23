@@ -7,8 +7,6 @@ editor: visual
 ```{r, warning=FALSE, message=FALSE}
 #| echo: false
 dat = read.table("Collider_Data_2025.txt", h = TRUE,stringsAsFactors =TRUE)
-dim(dat)
-head(dat)
 #doesn't want the libraries in code
 library(ggplot2)
 library(dplyr)
@@ -56,18 +54,19 @@ softmax <- function(Z)
 
 # c)
 
-$$
-\begin{aligned}
-\texttt{calc_Ci <- function(y_true, y_pred) \{}
-&\quad \texttt{if (y_true == 1)\{} \\
-&\qquad \texttt{return(-log(y_pred))} \\
-&\quad \texttt{\}} \\
-&\quad \texttt{else \{} \\
-&\qquad \texttt{return(0)} \\
-&\quad \texttt{\}} \\
-\texttt{\}}
-\end{aligned}
-$$
+MAYBE DO IN OVERLEAF, so its a typed response rather than this code chunk
+
+```{r, eval=FALSE}
+#| echo: true
+calc_Ci <- function(y_true, y_pred) {
+  # y_true is assumed to be a scalar (either 0 or 1)
+  if (y_true == 1) {
+    return(-log(y_pred))
+  } else {
+    return(0)
+  }
+}
+```
 
 Evaluating only the component corresponding to the actual class simplifies calculations and enhances numerical stability by avoiding evaluating terms that are known to be 0.
 
