@@ -29,7 +29,9 @@ ggplot(dat, aes(x=X1, y=X2, color=response ))+geom_point(size=2)+ggtitle("Scatte
 
 ```
 
-The scatter plot shows how the particles are distributed in the X1-X2 plane. We can see that the process creates a complex and non-linear separation in the points plotted. Therefore, the use of a neural network is justified as they are known for their ability to learn non-linear decision boundaries which is presented in the scatter plot.
+The scatter plot shows how the particles are distributed in the X1-X2 plane. The scatterplot of the collider data feature space shows three distinct clusters corresponding to the particle types: `code-Alpha`, `code-Beta`, and `code-Rho`. While the classes are broadly separated — with `code-Alpha` particles primarily located on the right, `code-Beta` particles on the left, and `code-Rho` particles clustered near the center — the boundaries between these regions are clearly non-linear. This structure suggests that linear classifiers would struggle to accurately separate the classes.\
+
+Thus, using non-linear models such as a neural network is appropriate for this classification task, as they can capture the curved, complex boundaries observed in the feature space.
 
 # b)
 
