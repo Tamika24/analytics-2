@@ -244,6 +244,66 @@ legend("topright",
 #legend("topright",
 #       legend = paste("min at ν =", signif(nu_seq[best_i],3)),
 #      col = "red", lty = 2, bty="n")
+# Set seed and split data
+
+# Set seed and split data
+set.seed(2025)
+N <- nrow(dat)
+set <- sample(1:N, size = 0.8 * N, replace = FALSE)
+dat_train <- dat[set, , drop = FALSE]
+dat_valid <- dat[-set, , drop = FALSE]
+
+# Prepare input/output matrices
+X_train <- as.matrix(dat_train[, c("X1", "X2", "X3")])
+Y_train <- as.matrix(dat_train[, c("Y1", "Y2", "Y3")])
+
+X_val   <- as.matrix(dat_valid[, c("X1", "X2", "X3")])
+Y_val   <- as.matrix(dat_valid[, c("Y1", "Y2", "Y3")])
+
+# Network dimensions and parameter count
+m    <- 4
+p    <- ncol(X_train)
+q    <- ncol(Y_train)
+npar <- 2*p^2 + 2*p + 2*p*m + 2*m + m^2 + m*q + q
+
+# Penalized training objective (nu will be set inside loop)
+obj_pen <- function(theta) {
+  af_forward(X_train, Y_train, theta, m, nu)$obj
+}
+
+# Sequence of regularization levels
+n_nu   <- 20
+nu_seq <- exp(seq(-10, -2, length = n_nu))
+
+# Initialize validation loss vector
+Val_error <- numeric(n_nu)
+
+for (i in seq_len(n_nu)) {
+  nu <- nu_seq[i]  # Set global nu
+  
+  # NEW: Random but small initialization
+  theta_rand <- runif(npar, -0.5, 0.5)
+  
+  # Optimize penalized objective
+  res_opt <- optim(theta_rand, obj_pen, method = "BFGS",
+                   control = list(maxit = 500))   # Limit to 500 iterations max
+  
+  # Evaluate unpenalized validation loss
+  Val_error[i] <- af_forward(X_val, Y_val, res_opt$par, m, nu = 0)$loss
+  
+  cat("nu =", signif(nu, 3), "→ val loss =", signif(Val_error[i], 4), "\n")
+}
+
+# Plot validation curve
+plot(log(nu_seq), Val_error, type = "b", pch = 16,
+     xlab = expression(log(nu)), ylab = "Validation Loss",
+     main = "Validation Loss vs Regularization (m = 4)")
+best_i  <- which.min(Val_error)
+best_nu <- nu_seq[best_i]
+points(log(best_nu), Val_error[best_i], col = "red", pch = 16)
+legend("topright",
+       legend = paste("Chosen ν =", signif(best_nu, 3)),
+       col = "red", pch = 16, bty = "n")
 
 ```
 
