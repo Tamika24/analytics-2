@@ -1,5 +1,6 @@
 ---
-title: "Assignment 2"
+title: "STA4026S Assignment 2 - Collider Data Classification"
+author: "Shriyaa Sooklal SKLSHR001 and Tamika Surajpal SRJTAM001"
 format: pdf
 editor: visual
 ---
@@ -28,7 +29,9 @@ ggplot(dat, aes(x=X1, y=X2, color=response ))+geom_point(size=2)+ggtitle("Scatte
 
 ```
 
-The scatter plot shows how the particles are distributed in the X1-X2 plane. We can see that the process creates a complex and non-linear separation in the points plotted. Therefore, the use of a neural network is justified as they are known for their ability to learn non-linear decision boundaries which is presented in the scatter plot.
+The scatter plot shows how the particles are distributed in the X1-X2 plane. The scatterplot of the collider data feature space shows three distinct clusters corresponding to the particle types: `code-Alpha`, `code-Beta`, and `code-Rho`. While the classes are broadly separated — with `code-Alpha` particles primarily located on the right, `code-Beta` particles on the left, and `code-Rho` particles clustered near the center — the boundaries between these regions are clearly non-linear. This structure suggests that linear classifiers would struggle to accurately separate the classes.\
+
+Thus, using non-linear models such as a neural network is appropriate for this classification task, as they can capture the curved, complex boundaries observed in the feature space.
 
 # b)
 
@@ -47,13 +50,17 @@ softmax <- function(Z)
   expZ / denom                                     
   }
 
-
+#softmax <- function(Z) {
+   # exp_Z <- exp(Z)
+   # exp_Z / matrix(colSums(exp_Z), nrow = nrow(exp_Z), ncol = ncol(exp_Z), byrow = TRUE)}
 
 ```
 
 # c)
 
 MAYBE DO IN OVERLEAF, so its a typed response rather than this code chunk
+
+The cross-entropy loss for a single observation can be written as:
 
 ```{r, eval=FALSE}
 #| echo: true
@@ -67,7 +74,7 @@ calc_Ci <- function(y_true, y_pred) {
 }
 ```
 
-Evaluating only the component corresponding to the actual class simplifies calculations and enhances numerical stability by avoiding evaluating terms that are known to be 0.
+Evaluating only the component corresponding to the actual class simplifies calculations and enhances numerical stability by avoiding evaluating terms that are known to be 0. This avoids taking log(0) of predicted probabilities for classes that were not selected.
 
 # d)
 
@@ -85,12 +92,16 @@ g <- function(Yhat, Y, eps = 1e-15) {
 
 Number of parameters = 2p^2^+2p+2pm+2m+m^2^+mq+q
 
-# f) had to change the softmax to be row wise in this function because of conformability, so not sure if that was right OR in "probs \<- softmax(Z)" use the transpose instead? so softmax(t(Z)). 
+# f) 
+
+had to change the softmax to be row wise in this function because of conformability, so not sure if that was right OR in "probs \<- softmax(Z)" use the transpose instead? so softmax(t(Z)).
 
 so see which one is right or better:
 
 1.  using the row wise softmax in the af_forward function which means we didn't use the function asked for in question b, then use the normal probs(softmax(Z)). commented this out for now in this code chunk, so can delete which ever one we don't want
 2.  use the colsums as done in question b, and then used the transposes for the probabilities as it is now in the code currently
+
+*Keep softmax columnwise to match b then inside af_forward apply softmax(t(Z)) then transpose back after*
 
 ```{r, warning=FALSE, message=FALSE}
 #| echo: true
@@ -132,18 +143,18 @@ af_forward <- function(X, Y, theta, m, nu)
   
   #expZ / matrix(rowSums(expZ), nrow = nrow(Z), ncol = ncol(Z), byrow = FALSE)
 #}
-  softmax <- function(Z) 
-  {
+ # softmax <- function(Z) 
+  #{
  
-  Z_shift <- Z - matrix(apply(Z, 2, max), nrow = 3, ncol = ncol(Z),byrow = TRUE)
+  #Z_shift <- Z - matrix(apply(Z, 2, max), nrow = 3, ncol = ncol(Z),byrow = TRUE)
   
-  expZ    <- exp(Z_shift)                          # exponentiate
-  denom   <- matrix(colSums(expZ),                 # column-wise sums
-                    nrow = 3, ncol = ncol(Z), 
-                    byrow = TRUE)
+  #expZ    <- exp(Z_shift)                          # exponentiate
+  #denom   <- matrix(colSums(expZ),                 # column-wise sums
+   #                 nrow = 3, ncol = ncol(Z), 
+    #                byrow = TRUE)
   
-  expZ / denom                                     
-  }
+  #expZ / denom                                     
+  #}
   #forward propagation 
   H1 <- tanh( X  %*% W1 + matrix(b1, N, 2*p, TRUE) )       # aug-layer                           
   H2 <- tanh( H1 %*% W2 + matrix(b2, N, m, TRUE) )      # 2nd hidden
@@ -164,7 +175,7 @@ af_forward <- function(X, Y, theta, m, nu)
 
 ```
 
-# g) 
+# g)
 
 ```{r, warning=FALSE, message=TRUE}
 #| echo: true
@@ -233,6 +244,66 @@ legend("topright",
 #legend("topright",
 #       legend = paste("min at ν =", signif(nu_seq[best_i],3)),
 #      col = "red", lty = 2, bty="n")
+# Set seed and split data
+
+# Set seed and split data
+set.seed(2025)
+N <- nrow(dat)
+set <- sample(1:N, size = 0.8 * N, replace = FALSE)
+dat_train <- dat[set, , drop = FALSE]
+dat_valid <- dat[-set, , drop = FALSE]
+
+# Prepare input/output matrices
+X_train <- as.matrix(dat_train[, c("X1", "X2", "X3")])
+Y_train <- as.matrix(dat_train[, c("Y1", "Y2", "Y3")])
+
+X_val   <- as.matrix(dat_valid[, c("X1", "X2", "X3")])
+Y_val   <- as.matrix(dat_valid[, c("Y1", "Y2", "Y3")])
+
+# Network dimensions and parameter count
+m    <- 4
+p    <- ncol(X_train)
+q    <- ncol(Y_train)
+npar <- 2*p^2 + 2*p + 2*p*m + 2*m + m^2 + m*q + q
+
+# Penalized training objective (nu will be set inside loop)
+obj_pen <- function(theta) {
+  af_forward(X_train, Y_train, theta, m, nu)$obj
+}
+
+# Sequence of regularization levels
+n_nu   <- 20
+nu_seq <- exp(seq(-10, -2, length = n_nu))
+
+# Initialize validation loss vector
+Val_error <- numeric(n_nu)
+
+for (i in seq_len(n_nu)) {
+  nu <- nu_seq[i]  # Set global nu
+  
+  # NEW: Random but small initialization
+  theta_rand <- runif(npar, -0.5, 0.5)
+  
+  # Optimize penalized objective
+  res_opt <- optim(theta_rand, obj_pen, method = "BFGS",
+                   control = list(maxit = 500))   # Limit to 500 iterations max
+  
+  # Evaluate unpenalized validation loss
+  Val_error[i] <- af_forward(X_val, Y_val, res_opt$par, m, nu = 0)$loss
+  
+  cat("nu =", signif(nu, 3), "→ val loss =", signif(Val_error[i], 4), "\n")
+}
+
+# Plot validation curve
+plot(log(nu_seq), Val_error, type = "b", pch = 16,
+     xlab = expression(log(nu)), ylab = "Validation Loss",
+     main = "Validation Loss vs Regularization (m = 4)")
+best_i  <- which.min(Val_error)
+best_nu <- nu_seq[best_i]
+points(log(best_nu), Val_error[best_i], col = "red", pch = 16)
+legend("topright",
+       legend = paste("Chosen ν =", signif(best_nu, 3)),
+       col = "red", pch = 16, bty = "n")
 
 ```
 
@@ -241,8 +312,91 @@ legend("topright",
 ```{r, warning=FALSE, message=TRUE}
 #| echo: true
 
+best_nu <- exp(-2) 
+# Set best regularization level found earlier
+nu <- best_nu
+
+# Re-train model at best nu
+obj_pen_best <- function(pars) {
+  af_forward(X_train, Y_train, pars, m, nu)$obj
+}
+
+theta_rand <- runif(npar, -1, 1)  # Reinitialize random parameters
+res_opt_best <- nlm(obj_pen_best, p = theta_rand, iterlim = 1000)
+theta_best <- res_opt_best$estimate
+
+# Now: Plot response curves by varying X1 and X2 separately
+
+# Helper function to predict probability curves
+predict_curve <- function(var_seq, varname, fixed_X2 = 0, fixed_X3 = 0, pars, m) {
+  n <- length(var_seq)
+  input <- matrix(0, nrow = n, ncol = 3)
+  input[, "X1"] <- if (varname == "X1") var_seq else fixed_X2
+  input[, "X2"] <- if (varname == "X2") var_seq else fixed_X2
+  input[, "X3"] <- fixed_X3
+  
+  preds <- af_forward(input, matrix(0, nrow=n, ncol=3), pars, m, nu=0)$Yhat
+  cbind(var_seq, preds)
+}
+
+# Create sequences
+X_seq <- seq(-4, 4, length.out = 100)
+
+# Response curves for Detector Type A (X3=1) and Type B (X3=0)
+curve_X1_A <- predict_curve(X_seq, "X1", fixed_X2=0, fixed_X3=1, theta_best, m)
+curve_X1_B <- predict_curve(X_seq, "X1", fixed_X2=0, fixed_X3=0, theta_best, m)
+
+curve_X2_A <- predict_curve(X_seq, "X2", fixed_X2=0, fixed_X3=1, theta_best, m)
+curve_X2_B <- predict_curve(X_seq, "X2", fixed_X2=0, fixed_X3=0, theta_best, m)
+
+# Now plotting
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+# Helper to prepare data
+prepare_plot_data <- function(curve_data, varname, type_label) {
+  df <- as.data.frame(curve_data)
+  colnames(df) <- c(varname, "alpha", "beta", "rho")
+  df$Detector <- type_label
+  df <- pivot_longer(df, cols = c("alpha", "beta", "rho"),
+                     names_to = "Class", values_to = "Probability")
+  return(df)
+}
+
+plot_data_X1 <- bind_rows(
+  prepare_plot_data(curve_X1_A, "X1", "Type A"),
+  prepare_plot_data(curve_X1_B, "X1", "Type B")
+)
+
+ggplot(plot_data_X1, aes(x = X1, y = Probability, color = Class)) +
+  geom_line() +
+  facet_wrap(~ Detector) +
+  labs(title = "Predicted Class Probabilities vs X1",
+       x = "X1", y = "Probability") +
+  theme_minimal() +
+  theme(aspect.ratio = 1)
+
+plot_data_X2 <- bind_rows(
+  prepare_plot_data(curve_X2_A, "X2", "Type A"),
+  prepare_plot_data(curve_X2_B, "X2", "Type B")
+)
+
+ggplot(plot_data_X2, aes(x = X2, y = Probability, color = Class)) +
+  geom_line() +
+  facet_wrap(~ Detector) +
+  labs(title = "Predicted Class Probabilities vs X2",
+       x = "X2", y = "Probability") +
+  theme_minimal() +
+  theme(aspect.ratio = 1)
 
 ```
+
+The response curves show clear differences between Detector Type A and Detector Type B.\
+
+For example, for certain ranges of X1 or X2, the predicted probabilities for the same input differ depending on the detector used.\
+
+This suggests that the model has learned to adjust classification boundaries based on the detector type (X3), confirming that detector characteristics impact the scattering patterns observed.
 
 # i) (check and put into own words)
 
