@@ -50,13 +50,17 @@ softmax <- function(Z)
   expZ / denom                                     
   }
 
-
+#softmax <- function(Z) {
+   # exp_Z <- exp(Z)
+   # exp_Z / matrix(colSums(exp_Z), nrow = nrow(exp_Z), ncol = ncol(exp_Z), byrow = TRUE)}
 
 ```
 
 # c)
 
 MAYBE DO IN OVERLEAF, so its a typed response rather than this code chunk
+
+The cross-entropy loss for a single observation can be written as:
 
 ```{r, eval=FALSE}
 #| echo: true
@@ -70,7 +74,7 @@ calc_Ci <- function(y_true, y_pred) {
 }
 ```
 
-Evaluating only the component corresponding to the actual class simplifies calculations and enhances numerical stability by avoiding evaluating terms that are known to be 0.
+Evaluating only the component corresponding to the actual class simplifies calculations and enhances numerical stability by avoiding evaluating terms that are known to be 0. This avoids taking log(0) of predicted probabilities for classes that were not selected.
 
 # d)
 
