@@ -92,12 +92,16 @@ g <- function(Yhat, Y, eps = 1e-15) {
 
 Number of parameters = 2p^2^+2p+2pm+2m+m^2^+mq+q
 
-# f) had to change the softmax to be row wise in this function because of conformability, so not sure if that was right OR in "probs \<- softmax(Z)" use the transpose instead? so softmax(t(Z)).
+# f) 
+
+had to change the softmax to be row wise in this function because of conformability, so not sure if that was right OR in "probs \<- softmax(Z)" use the transpose instead? so softmax(t(Z)).
 
 so see which one is right or better:
 
 1.  using the row wise softmax in the af_forward function which means we didn't use the function asked for in question b, then use the normal probs(softmax(Z)). commented this out for now in this code chunk, so can delete which ever one we don't want
 2.  use the colsums as done in question b, and then used the transposes for the probabilities as it is now in the code currently
+
+*Keep softmax columnwise to match b then inside af_forward apply softmax(t(Z)) then transpose back after*
 
 ```{r, warning=FALSE, message=FALSE}
 #| echo: true
@@ -139,18 +143,18 @@ af_forward <- function(X, Y, theta, m, nu)
   
   #expZ / matrix(rowSums(expZ), nrow = nrow(Z), ncol = ncol(Z), byrow = FALSE)
 #}
-  softmax <- function(Z) 
-  {
+ # softmax <- function(Z) 
+  #{
  
-  Z_shift <- Z - matrix(apply(Z, 2, max), nrow = 3, ncol = ncol(Z),byrow = TRUE)
+  #Z_shift <- Z - matrix(apply(Z, 2, max), nrow = 3, ncol = ncol(Z),byrow = TRUE)
   
-  expZ    <- exp(Z_shift)                          # exponentiate
-  denom   <- matrix(colSums(expZ),                 # column-wise sums
-                    nrow = 3, ncol = ncol(Z), 
-                    byrow = TRUE)
+  #expZ    <- exp(Z_shift)                          # exponentiate
+  #denom   <- matrix(colSums(expZ),                 # column-wise sums
+   #                 nrow = 3, ncol = ncol(Z), 
+    #                byrow = TRUE)
   
-  expZ / denom                                     
-  }
+  #expZ / denom                                     
+  #}
   #forward propagation 
   H1 <- tanh( X  %*% W1 + matrix(b1, N, 2*p, TRUE) )       # aug-layer                           
   H2 <- tanh( H1 %*% W2 + matrix(b2, N, m, TRUE) )      # 2nd hidden
