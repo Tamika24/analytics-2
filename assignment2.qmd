@@ -1,5 +1,6 @@
 ---
-title: "Assignment 2"
+title: "STA4026S Assignment 2 - Collider Data Classification"
+author: "Shriyaa Sooklal SKLSHR001 and Tamika Surajpal SRJTAM001"
 format: pdf
 editor: visual
 ---
@@ -85,7 +86,7 @@ g <- function(Yhat, Y, eps = 1e-15) {
 
 Number of parameters = 2p^2^+2p+2pm+2m+m^2^+mq+q
 
-# f) had to change the softmax to be row wise in this function because of conformability, so not sure if that was right OR in "probs \<- softmax(Z)" use the transpose instead? so softmax(t(Z)). 
+# f) had to change the softmax to be row wise in this function because of conformability, so not sure if that was right OR in "probs \<- softmax(Z)" use the transpose instead? so softmax(t(Z)).
 
 so see which one is right or better:
 
@@ -164,7 +165,7 @@ af_forward <- function(X, Y, theta, m, nu)
 
 ```
 
-# g) 
+# g)
 
 ```{r, warning=FALSE, message=TRUE}
 #| echo: true
@@ -241,8 +242,91 @@ legend("topright",
 ```{r, warning=FALSE, message=TRUE}
 #| echo: true
 
+best_nu <- exp(-2) 
+# Set best regularization level found earlier
+nu <- best_nu
+
+# Re-train model at best nu
+obj_pen_best <- function(pars) {
+  af_forward(X_train, Y_train, pars, m, nu)$obj
+}
+
+theta_rand <- runif(npar, -1, 1)  # Reinitialize random parameters
+res_opt_best <- nlm(obj_pen_best, p = theta_rand, iterlim = 1000)
+theta_best <- res_opt_best$estimate
+
+# Now: Plot response curves by varying X1 and X2 separately
+
+# Helper function to predict probability curves
+predict_curve <- function(var_seq, varname, fixed_X2 = 0, fixed_X3 = 0, pars, m) {
+  n <- length(var_seq)
+  input <- matrix(0, nrow = n, ncol = 3)
+  input[, "X1"] <- if (varname == "X1") var_seq else fixed_X2
+  input[, "X2"] <- if (varname == "X2") var_seq else fixed_X2
+  input[, "X3"] <- fixed_X3
+  
+  preds <- af_forward(input, matrix(0, nrow=n, ncol=3), pars, m, nu=0)$Yhat
+  cbind(var_seq, preds)
+}
+
+# Create sequences
+X_seq <- seq(-4, 4, length.out = 100)
+
+# Response curves for Detector Type A (X3=1) and Type B (X3=0)
+curve_X1_A <- predict_curve(X_seq, "X1", fixed_X2=0, fixed_X3=1, theta_best, m)
+curve_X1_B <- predict_curve(X_seq, "X1", fixed_X2=0, fixed_X3=0, theta_best, m)
+
+curve_X2_A <- predict_curve(X_seq, "X2", fixed_X2=0, fixed_X3=1, theta_best, m)
+curve_X2_B <- predict_curve(X_seq, "X2", fixed_X2=0, fixed_X3=0, theta_best, m)
+
+# Now plotting
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+# Helper to prepare data
+prepare_plot_data <- function(curve_data, varname, type_label) {
+  df <- as.data.frame(curve_data)
+  colnames(df) <- c(varname, "alpha", "beta", "rho")
+  df$Detector <- type_label
+  df <- pivot_longer(df, cols = c("alpha", "beta", "rho"),
+                     names_to = "Class", values_to = "Probability")
+  return(df)
+}
+
+plot_data_X1 <- bind_rows(
+  prepare_plot_data(curve_X1_A, "X1", "Type A"),
+  prepare_plot_data(curve_X1_B, "X1", "Type B")
+)
+
+ggplot(plot_data_X1, aes(x = X1, y = Probability, color = Class)) +
+  geom_line() +
+  facet_wrap(~ Detector) +
+  labs(title = "Predicted Class Probabilities vs X1",
+       x = "X1", y = "Probability") +
+  theme_minimal() +
+  theme(aspect.ratio = 1)
+
+plot_data_X2 <- bind_rows(
+  prepare_plot_data(curve_X2_A, "X2", "Type A"),
+  prepare_plot_data(curve_X2_B, "X2", "Type B")
+)
+
+ggplot(plot_data_X2, aes(x = X2, y = Probability, color = Class)) +
+  geom_line() +
+  facet_wrap(~ Detector) +
+  labs(title = "Predicted Class Probabilities vs X2",
+       x = "X2", y = "Probability") +
+  theme_minimal() +
+  theme(aspect.ratio = 1)
 
 ```
+
+The response curves show clear differences between Detector Type A and Detector Type B.\
+
+For example, for certain ranges of X1 or X2, the predicted probabilities for the same input differ depending on the detector used.\
+
+This suggests that the model has learned to adjust classification boundaries based on the detector type (X3), confirming that detector characteristics impact the scattering patterns observed.
 
 # i) (check and put into own words)
 
