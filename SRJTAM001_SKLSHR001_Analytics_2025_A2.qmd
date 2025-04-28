@@ -18,7 +18,7 @@ library(tidyr)
 
 # a)
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #| echo: true
 #| label: fig-scatter
 #| fig-cap: "This is a scatter plot of the Collider data in the X1 and X2 feature space, with points colour-coded by true particle class (α in red, β in blue, ρ in green), illustrating non-linear boundaries that motivate using a neural network for classification."
@@ -62,7 +62,17 @@ softmax <- function(Z)
 
 # c)
 
-The cross-entropy loss for a single observation can be written as:
+The function `calc_Ci` can be defined as follows:
+
+$$
+\texttt{calc\_Ci}(y_{\text{true}}, y_{\text{pred}}) =
+\begin{cases}
+-\log(y_{\text{pred}}), & \text{if } y_{\text{true}} = 1, \\
+0, & \text{otherwise.}
+\end{cases}
+$$
+
+In this function, ( y\_{\text{true}} ) is assumed to be a scalar value that takes the value 0 or 1, representing the true class label. If ( y\_{\text{true}} = 1 ), the function computes the negative logarithm of ( y\_{\text{pred}} ), which is the predicted probability for the true class. If ( y\_{\text{true}} = 0 ), the function simply returns 0.
 
 ```{r, eval=FALSE}
 #| echo: true
@@ -76,7 +86,13 @@ calc_Ci <- function(y_true, y_pred) {
 }
 ```
 
-Evaluating only the component corresponding to the actual class simplifies calculations and enhances numerical stability by avoiding evaluating terms that are known to be 0. This avoids taking log(0) of predicted probabilities for classes that were not selected.
+\textbf{Explanation:}
+
+The reason it is advantageous to evaluate only the terms corresponding to ( y_i = 1 ) is that the objective function, ( C_i ), only contributes a non-zero value when the true class label ( y\_{ij} ) is 1. This means that for each data point, only one term in the summation is relevant for the calculation of the objective. Evaluating only the relevant term reduces unnecessary computations and improves numerical efficiency.
+
+In practice, this method of selectively evaluating the terms corresponding to the true class labels (when ( y_i = 1 )) is beneficial because: - It avoids redundant calculations for terms where ( y\_{ij} = 0 ), which would contribute 0 to the sum. - It reduces the risk of numerical instability in floating-point operations, especially when working with very small values in the log function.
+
+Thus, by focusing on the relevant terms, the computation becomes more efficient and numerically stable.
 
 # d)
 
@@ -91,6 +107,12 @@ g <- function(Yhat, Y, eps = 1e-15) {
 ```
 
 # e)
+
+The number of parameters \\( N\_{\\text{params}} \\) in an \\((m, m)\\)-Auto-Feature network with input dimension \\( p \\) and output dimension \\( q \\) is given by:
+
+$$
+N_{\text{params}} = 2p^2 + 2p + 2pm + 2m + m^2 + mq + q.
+$$In this expression, \\( p \\) represents the input dimension, \\( m \\) is the number of hidden nodes, and \\( q \\) is the output dimension. The terms in the formula correspond to the parameters in the various layers of the network, including weights and biases.
 
 Number of parameters = 2p^2^+2p+2pm+2m+m^2^+mq+q
 
@@ -186,10 +208,11 @@ for (i in 1:length(nu_values)) {
   p <- ncol(X_train)
   q <- ncol(Y_train)
   m <- 4
+  npars <- 87
   theta_rand <- runif(npars, -1, 1)
   
   # Fit the model using optim() to minimize the objective function
-  fit <- optim(theta_init, objective_fn, X = X_train, Y = Y_train, m = 4, nu = nu)
+  fit <- optim(theta_rand, objective_fn, X = X_train, Y = Y_train, m = 4, nu = nu)
   
   # Get the predicted probabilities for validation set
   Yhat_valid <- af_forward(X_valid, Y_valid, fit$par, m = 4, nu = nu)$probs
