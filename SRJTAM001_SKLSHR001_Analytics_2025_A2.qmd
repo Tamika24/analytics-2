@@ -8,10 +8,11 @@ editor: visual
 ```{r, warning=FALSE, message=FALSE}
 #| echo: false
 dat = read.table("Collider_Data_2025.txt", h = TRUE,stringsAsFactors =TRUE)
-#doesn't want the libraries in code
+
 library(ggplot2)
 library(dplyr)
 library(r2symbols)
+library(tidyr)
 ```
 
 # a)
@@ -49,10 +50,6 @@ softmax <- function(Z)
   
   expZ / denom                                     
   }
-
-#softmax <- function(Z) {
-   # exp_Z <- exp(Z)
-   # exp_Z / matrix(colSums(exp_Z), nrow = nrow(exp_Z), ncol = ncol(exp_Z), byrow = TRUE)}
 
 ```
 
@@ -204,7 +201,7 @@ optimal_nu <- nu_values[which.min(validation_errors)]
 
 ```
 
-The optimal regularisation parameter is `r round(optimal_nu, 4)` as it minimises the validation error.
+The optimal regularization parameter is `r round(optimal_nu, 4)` as it minimizes the validation error.
 
 # h)
 
@@ -298,10 +295,8 @@ ggplot(plot_data_X2, aes(x = X2, y = Probability, color = Class)) +
 
 ```
 
-# i) 
+# i)
 
-Using an Attention-based Feedforward (AF) network over a standard feedforward neural network offers several practical advantages. One of the key benefits is that AF networks can focus on the most relevant parts of the data, allowing them to emphasize the features that matter most for prediction. This helps improve performance in complex scenarios, where relationships between inputs and outputs may not be simple or linear. Standard feedforward networks, on the other hand, treat all inputs equally, which can lead to suboptimal performance in such cases.
+One practical advantage of using an AutoFeature (AF) network over a standard feedforward neural network is that AF networks automatically discover important transformations of the input variables, such as quadratic terms and interactions, without requiring manual feature engineering. In our Prac, we saw that the AF network easily captured structured nonlinear relationships between X1, X2, and the class probabilities (α, β, ρ) — for example, the probability of class ρ showed a clear upward trend with X1, even though no complex hidden layers were manually designed. This shows that the AF network can model nonlinearity efficiently with simple transformations.
 
-Another advantage is that AF networks can capture long-range dependencies between different features, making them more adaptable to data where the importance of features varies over time or across different contexts. For instance, in time-series or sequence-based data, AF networks can weigh the importance of past events or inputs, improving their ability to make accurate predictions.
-
-AF networks also tend to work better with noisy or high-dimensional data. In these situations, a standard feedforward network might get overwhelmed by the irrelevant features, leading to overfitting or underperformance. The attention mechanism helps the network filter out noise and concentrate on the features that genuinely matter, reducing the risk of overfitting and improving generalization.
+Another advantage is interpretability. Because the AF network was designed to learn specific types of feature mappings (rather than arbitrary complex patterns), we could directly observe how the inputs influenced the outputs through the plotted response curves. For instance, the nearly linear but slightly sloped trends for α and β made it clear how X1 and X2 affected the probabilities. In contrast, a standard feedforward network would have created highly entangled hidden features, making it difficult to extract such insights. Finally, by constraining the feature space, the AF network also helped prevent overfitting, which is especially important when working with limited training data, as we had in this Prac.
