@@ -62,59 +62,32 @@ softmax <- function(Z)
 
 # c)
 
-The function `calc_Ci` can be defined as follows:
+We can define the contribution of a single observation $i$ to the cross-entropy loss, $C_i$, using the following case-based function:
 
 $$
-\texttt{calc\_Ci}(y_{\text{true}}, y_{\text{pred}}) =
-\begin{cases}
--\log(y_{\text{pred}}), & \text{if } y_{\text{true}} = 1, \\
-0, & \text{otherwise.}
-\end{cases}
+ C_i =\begin{cases}-\log(\hat{y}_{ij}) & \text{if } y_{ij} = 1, \\0 & \text{otherwise}.\end{cases}\
 $$
 
-In this function, ( y\_{\text{true}} ) is assumed to be a scalar value that takes the value 0 or 1, representing the true class label. If ( y\_{\text{true}} = 1 ), the function computes the negative logarithm of ( y\_{\text{pred}} ), which is the predicted probability for the true class. If ( y\_{\text{true}} = 0 ), the function simply returns 0.
-
-```{r, eval=FALSE}
-#| echo: true
-calc_Ci <- function(y_true, y_pred) {
-  # y_true is assumed to be a scalar (either 0 or 1)
-  if (y_true == 1) {
-    return(-log(y_pred))
-  } else {
-    return(0)
-  }
-}
-```
-
-\textbf{Explanation:}
-
-The reason it is advantageous to evaluate only the terms corresponding to ( y_i = 1 ) is that the objective function, ( C_i ), only contributes a non-zero value when the true class label ( y\_{ij} ) is 1. This means that for each data point, only one term in the summation is relevant for the calculation of the objective. Evaluating only the relevant term reduces unnecessary computations and improves numerical efficiency.
-
-In practice, this method of selectively evaluating the terms corresponding to the true class labels (when ( y_i = 1 )) is beneficial because: - It avoids redundant calculations for terms where ( y\_{ij} = 0 ), which would contribute 0 to the sum. - It reduces the risk of numerical instability in floating-point operations, especially when working with very small values in the log function.
-
-Thus, by focusing on the relevant terms, the computation becomes more efficient and numerically stable.
+It is advantageous, for numerical purposes, to evaluate only the term corresponding to the class where $y_{ij} = 1$. This is because for all other classes, $y_{ij}=0$, and their contributions to the sum are therefore exactly zero. Avoiding unnecessary computation of terms like $0 \times \log(\hat{y}_{ij})$ improves numerical stability, reduces computational cost, and prevents possible undefined operations such as taking the logarithm of zero.
 
 # d)
 
 ```{r, warning=FALSE, message=FALSE}
 #| echo: true
 g <- function(Yhat, Y, eps = 1e-15) {
-  # Yhat, Y : N × q matrices   (rows = obs, cols = classes)
+  # Yhat, Y : N × q matrices   (rows = obs, columns = classes)
   N <- nrow(Y)
   -sum( Y * log( pmax(Yhat, eps) ) ) / N
 }
-
 ```
 
 # e)
 
-The number of parameters \\( N\_{\\text{params}} \\) in an \\((m, m)\\)-Auto-Feature network with input dimension \\( p \\) and output dimension \\( q \\) is given by:
+The number of parameters $\( N_{\text{params}} \)$ in an $\((m, m)\)$-Auto-Feature network with input dimension $\( p \)$ and output dimension $\( q \)$ is given by:
 
 $$
 N_{\text{params}} = 2p^2 + 2p + 2pm + 2m + m^2 + mq + q.
-$$In this expression, \\( p \\) represents the input dimension, \\( m \\) is the number of hidden nodes, and \\( q \\) is the output dimension. The terms in the formula correspond to the parameters in the various layers of the network, including weights and biases.
-
-Number of parameters = 2p^2^+2p+2pm+2m+m^2^+mq+q
+$$In this expression, $\( p \)$ represents the input dimension, $\( m \)$ is the number of hidden nodes, and $\( q \)$ is the output dimension. The terms in the formula correspond to the parameters in the various layers of the network, including weights and biases.
 
 # f)
 
