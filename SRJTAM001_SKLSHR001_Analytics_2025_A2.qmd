@@ -18,10 +18,13 @@ library(tidyr)
 
 # a)
 
-```{r, warning=FALSE, message=FALSE, fig.cap="This is a scatterplot of particle coordinates on the feature space (X1-X2 plane), colored by true particle type."}
+```{r, warning=FALSE, message=FALSE}
 #| echo: true
-#| label: fig-dat
-dat$response <- apply(dat[, c("Y1", "Y2", "Y3")], 1, function (x){ # naming the responses
+#| label: fig-scatter
+#| fig-cap: "Scatter plot of the collider data in the X1 and X2 feature space, with points colour-coded by true particle class (α in red, β in blue, ρ in green), illustrating substantial overlap and non-linear boundaries that motivate using a neural network for classification."
+
+dat$response <- apply(dat[, c("Y1", "Y2", "Y3")], 1, function (x){
+
   if (x[1] == 1) return("code-Alpha")
   if (x[2] == 1) return("code-Beta")
   if (x[3] == 1) return("code-Rho")
@@ -173,7 +176,7 @@ objective_fn <- function(theta, X, Y, m, nu) {
 }
 
 # Step 4: Grid search over regularization parameter nu
-nu_values <- exp(seq(-6, 2, length.out = 100))
+nu_values <- exp(seq(-6, 2, length.out = 15))
 validation_errors <- numeric(length(nu_values))
 
 for (i in 1:length(nu_values)) {
@@ -196,7 +199,7 @@ for (i in 1:length(nu_values)) {
 }
 
 # Step 5: Plot validation error vs nu
-plot(nu_values, validation_errors, type = "b", col = "blue", pch = 19,
+plot(nu_values, validation_errors, type = "b", col = "blue", pch = 19, asp = 1, log="x", 
      xlab = "Regularization Parameter (ν)", ylab = "Validation Error",
      main = "Validation Error vs Regularization Parameter (ν)")
 grid()
