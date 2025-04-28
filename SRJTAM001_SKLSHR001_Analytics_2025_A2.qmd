@@ -221,7 +221,7 @@ obj_pen_best <- function(pars) {
   af_forward(X_train, Y_train, pars, m, nu)$obj
 }
 
-theta_rand <- runif(npar, -1, 1)  # Reinitialize random parameters
+theta_rand <- runif(npars, -1, 1)  # Reinitialize random parameters
 res_opt_best <- nlm(obj_pen_best, p = theta_rand, iterlim = 1000)
 theta_best <- res_opt_best$estimate
 
