@@ -7,8 +7,9 @@ editor: visual
 
 ```{r, warning=FALSE, message=FALSE}
 #| echo: false
-dat = read.table("Collider_Data_2025.txt", h = TRUE,stringsAsFactors =TRUE)
+dat = read.table("Collider_Data_2025.txt", h = TRUE,stringsAsFactors =TRUE) # Text columns automatically become factors (categories)
 
+# Load libraries
 library(ggplot2)
 library(dplyr)
 library(r2symbols)
@@ -17,20 +18,24 @@ library(tidyr)
 
 # a)
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, fig.cap="This is a scatterplot of particle coordinates on the feature space (X1-X2 plane), colored by true particle type."}
 #| echo: true
-dat$response <- apply(dat[, c("Y1", "Y2", "Y3")], 1, function (x){
+#| label: fig-dat
+dat$response <- apply(dat[, c("Y1", "Y2", "Y3")], 1, function (x){ # naming the responses
   if (x[1] == 1) return("code-Alpha")
   if (x[2] == 1) return("code-Beta")
   if (x[3] == 1) return("code-Rho")
 })
-ggplot(dat, aes(x=X1, y=X2, color=response ))+geom_point(size=2)+ggtitle("Scatter plot of Collider Data Feature Space")+ theme_minimal()
 
-
+ggplot(dat, aes(x=X1, y=X2, color=response))+
+         geom_point(size=2)+
+         coord_fixed()+ # 1:1 aspect ratio
+         labs(title = "Scatterplot of particles in feature space", x = "First coordinate (X1)", y = "Second coordinate (X2)", color = "Particle type")+
+         theme_minimal()
 
 ```
 
-The scatter plot shows how the particles are distributed in the X1-X2 plane. The scatterplot of the collider data feature space shows three distinct clusters corresponding to the particle types: `code-Alpha`, `code-Beta`, and `code-Rho`. While the classes are broadly separated — with `code-Alpha` particles primarily located on the right, `code-Beta` particles on the left, and `code-Rho` particles clustered near the center — the boundaries between these regions are clearly non-linear. This structure suggests that linear classifiers would struggle to accurately separate the classes.\
+@fig-dat shows three distinct clusters corresponding to the particle types: `code-Alpha`, `code-Beta`, and `code-Rho`. While the classes are broadly separated — with `code-Alpha` particles primarily located on the right, `code-Beta` particles on the left, and `code-Rho` particles clustered near the center — the boundaries between these regions are clearly non-linear. This structure suggests that linear classifiers would struggle to accurately separate the classes.
 
 Thus, using non-linear models such as a neural network is appropriate for this classification task, as they can capture the curved, complex boundaries observed in the feature space.
 
@@ -40,12 +45,11 @@ Thus, using non-linear models such as a neural network is appropriate for this c
 #| echo: true
 softmax <- function(Z) 
   {
- 
-  Z_shift <- Z - matrix(apply(Z, 2, max), nrow = 3, ncol = ncol(Z),byrow = TRUE)
+  Z_shift <- Z - matrix(apply(Z, 2, max), nrow = 3, ncol = ncol(Z),byrow = TRUE) # Subtract the column max for numerical stability (to avoid computational overflow when exponentiating)
   
-  expZ    <- exp(Z_shift)                          # exponentiate
-  denom   <- matrix(colSums(expZ),                 # column-wise sums
-                    nrow = 3, ncol = ncol(Z), 
+  expZ    <- exp(Z_shift)                          
+  denom   <- matrix(colSums(expZ),                 # column-wise sums...sum across 3 classes
+                    nrow = 3, ncol = ncol(Z),      # convert to matrix for conformability
                     byrow = TRUE)
   
   expZ / denom                                     
@@ -298,6 +302,6 @@ ggplot(plot_data_X2, aes(x = X2, y = Probability, color = Class)) +
 
 # i)
 
-One practical advantage of using an AutoFeature (AF) network over a standard feedforward neural network is that AF networks automatically discover important transformations of the input variables, such as quadratic terms and interactions, without requiring manual feature engineering. In our Prac, we saw that the AF network easily captured structured nonlinear relationships between X1, X2, and the class probabilities (α, β, ρ) — for example, the probability of class ρ showed a clear upward trend with X1, even though no complex hidden layers were manually designed. This shows that the AF network can model nonlinearity efficiently with simple transformations.
+One practical advantage of using an AutoFeature (AF) network over a standard feedforward neural network is that AF networks automatically discover important transformations of the input variables, such as quadratic terms and interactions, without requiring manual feature engineering. In our Prac, we saw that the AF network easily captured structured nonlinear relationships between X1, X2, and the class probabilities (α, β, ρ) — for example, the probability of class ρ showed a clear nonlinear upward trend with X1, even though no complex hidden layers were manually designed. This shows that the AF network can model nonlinearity efficiently with simple transformations.
 
 Another advantage is interpretability. Because the AF network was designed to learn specific types of feature mappings (rather than arbitrary complex patterns), we could directly observe how the inputs influenced the outputs through the plotted response curves. For instance, the nearly linear but slightly sloped trends for α and β made it clear how X1 and X2 affected the probabilities. In contrast, a standard feedforward network would have created highly entangled hidden features, making it difficult to extract such insights. Finally, by constraining the feature space, the AF network also helped prevent overfitting, which is especially important when working with limited training data, as we had in this Prac.
