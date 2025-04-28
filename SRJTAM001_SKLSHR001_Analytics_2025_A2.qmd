@@ -179,7 +179,7 @@ for (i in 1:length(nu_values)) {
   p <- ncol(X_train)
   q <- ncol(Y_train)
   m <- 4
-  theta_init <- rnorm((2 * p^2) + (2 * p) + (2 * p * m) + m + (m * m) +                 m + (m * q) + q)
+  theta_rand <- runif(npars, -1, 1)
   
   # Fit the model using optim() to minimize the objective function
   fit <- optim(theta_init, objective_fn, X = X_train, Y = Y_train, m = 4, nu = nu)
