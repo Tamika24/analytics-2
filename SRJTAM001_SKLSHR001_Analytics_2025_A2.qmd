@@ -181,7 +181,8 @@ for (i in 1:length(nu_values)) {
   # Initial random theta
   p <- ncol(X_train)
   q <- ncol(Y_train)
-  theta_init <- rnorm((2 * p^2) + (2 * p) + (2 * p * m) + m + (m * m) + m + (m * q) + q)
+  m <- 4
+  theta_init <- rnorm((2 * p^2) + (2 * p) + (2 * p * m) + m + (m * m) +                 m + (m * q) + q)
   
   # Fit the model using optim() to minimize the objective function
   fit <- optim(theta_init, objective_fn, X = X_train, Y = Y_train, m = 4, nu = nu)
@@ -298,7 +299,7 @@ ggplot(plot_data_X2, aes(x = X2, y = Probability, color = Class)) +
 
 ```
 
-# i) 
+# i)
 
 Using an Attention-based Feedforward (AF) network over a standard feedforward neural network offers several practical advantages. One of the key benefits is that AF networks can focus on the most relevant parts of the data, allowing them to emphasize the features that matter most for prediction. This helps improve performance in complex scenarios, where relationships between inputs and outputs may not be simple or linear. Standard feedforward networks, on the other hand, treat all inputs equally, which can lead to suboptimal performance in such cases.
 
