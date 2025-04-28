@@ -75,19 +75,20 @@ It is advantageous, for numerical purposes, to evaluate only the term correspond
 ```{r, warning=FALSE, message=FALSE}
 #| echo: true
 g <- function(Yhat, Y, eps = 1e-15) {
-  # Yhat, Y : N × q matrices   (rows = obs, columns = classes)
+  # Yhat, Y : N × q matrices   (rows = observations, columns = classes)
   N <- nrow(Y)
-  -sum( Y * log( pmax(Yhat, eps) ) ) / N
+  cross_entropy <- -sum( Y * log( pmax(Yhat, eps) ) ) / N # pmax() replaces any element of Yhat that is smaller than eps with eps - ensures no value passed to log() is <= zero
+  return(cross_entropy)
 }
 ```
 
 # e)
 
-The number of parameters $\( N_{\text{params}} \)$ in an $\((m, m)\)$-Auto-Feature network with input dimension $\( p \)$ and output dimension $\( q \)$ is given by:
+The number of parameters $n_{\text{pars}}$ in an $(m, m)$-Auto-Feature network with input dimension $p$ and output dimension $q$ is given by:
 
 $$
-N_{\text{params}} = 2p^2 + 2p + 2pm + 2m + m^2 + mq + q.
-$$In this expression, $\( p \)$ represents the input dimension, $\( m \)$ is the number of hidden nodes, and $\( q \)$ is the output dimension. The terms in the formula correspond to the parameters in the various layers of the network, including weights and biases.
+n_{\text{pars}} = 2p^2 + 2p + 2pm + 2m + m^2 + mq + q.
+$$
 
 # f)
 
