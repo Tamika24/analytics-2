@@ -208,7 +208,7 @@ for (i in 1:length(nu_values)) {
   p <- ncol(X_train)
   q <- ncol(Y_train)
   m <- 4
-  npars <- 87
+  npars  <- 2*p^2 + 2*p + 2*p*m + 2*m + m^2 + m*q + q
   theta_rand <- runif(npars, -1, 1)
   
   # Fit the model using optim() to minimize the objective function
