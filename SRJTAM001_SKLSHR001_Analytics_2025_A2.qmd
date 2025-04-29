@@ -190,6 +190,8 @@ af_forward <- function(X, Y, theta, m, v)
 
 ```{r, warning=FALSE, message=TRUE}
 #| echo: true
+#| label: fig-valid
+#| fig-cap: "Validation cross-entropy loss on the held-out set plotted against the L2-regularization parameter v(log-scaled) for an AF-network with m=4. The red dashed line marks the chosen optimal v. We use a logarithmic scale because v ranges over several orders of magnitude; the log‐scale stretches out the small v region so that the classic U‐shaped trade‐off between under‐ and over‐regularization becomes visible."
 
 set.seed(2025)
 m <- 4
