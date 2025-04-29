@@ -1,7 +1,3 @@
-```{r response_curves_fixed, warning=FALSE, message=FALSE}
-library(tidyr)
-library(ggplot2)
-
 # 1) Compute the medians of X1 and X2 from your data
 X1_med <- median(dat$X1)
 X2_med <- median(dat$X2)
