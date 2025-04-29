@@ -23,7 +23,11 @@ library(knitr)
 opts_chunk$set(tidy.opts=list(width.cutoff=80),tidy=TRUE)
 ```
 
+
+
 # a)
+
+
 
 ```{r, warning=FALSE, message=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #| echo: true
@@ -47,11 +51,15 @@ ggplot(dat, aes(x=X1, y=X2, color=response))+
 
 ```
 
+
+
 @fig-scatter shows three distinct clusters corresponding to the particle types: `code-Alpha`, `code-Beta`, and `code-Rho`. While the classes are broadly separated — with `code-Alpha` particles primarily located on the right, `code-Beta` particles on the left, and `code-Rho` particles clustered near the center — the boundaries between these regions are clearly non-linear. This structure suggests that linear classifiers would struggle to accurately separate the classes.
 
 Thus, using non-linear models such as a neural network is appropriate for this classification task, as they can capture the curved, complex boundaries observed in the feature space.
 
 # b)
+
+
 
 ```{r, warning=FALSE, message=FALSE}
 #| echo: true
@@ -73,6 +81,8 @@ softmax <- function(Z)
 
 ```
 
+
+
 # c)
 
 We can define the contribution of a single observation $i$ to the cross-entropy loss, $C_i$, using the following case-based function:
@@ -85,6 +95,8 @@ It is advantageous, for numerical purposes, to evaluate only the term correspond
 
 # d)
 
+
+
 ```{r, warning=FALSE, message=FALSE}
 #| echo: true
 g <- function(Yhat, Y, eps = 1e-15) {
@@ -95,6 +107,8 @@ g <- function(Yhat, Y, eps = 1e-15) {
 }
 ```
 
+
+
 # e)
 
 The number of parameters $n_{\text{pars}}$ in an $(m, m)$-Auto-Feature network with input dimension $p$ and output dimension $q$ is given by:
@@ -104,6 +118,8 @@ n_{\text{pars}} = 2p^2 + 2p + 2pm + 2m + m^2 + mq + q.
 $$
 
 # f)
+
+
 
 ```{r, warning=FALSE, message=FALSE}
 #| echo: true
@@ -163,7 +179,11 @@ af_forward <- function(X, Y, theta, m, v)
 }
 ```
 
+
+
 # g)
+
+
 
 ```{r, warning=FALSE, message=TRUE}
 #| echo: true
@@ -234,9 +254,13 @@ legend("topright",
 
 ```
 
+
+
 The optimal regularization parameter is `r round(best_v, 4)` as it minimizes the validation error.
 
 # h)
+
+
 
 ```{r, warning=FALSE, message=TRUE}
 #| echo: true
@@ -334,8 +358,11 @@ ggplot(plot_data_X2, aes(x = X2, y = Probability, color = Class)) +
   theme(aspect.ratio = 1)
 ```
 
+
+
 # i)
 
 One practical advantage of using an AF network over a standard feedforward neural network is that AF networks automatically discover important transformations of the input variables, such as quadratic terms and interactions, without requiring manual feature engineering. In our Prac, we saw that the AF network easily captured structured nonlinear relationships between X1, X2, and the class probabilities `r (expression(alpha), expression(beta), expression(rho))` — for example, the probability of class `r expression(ρ)` showed a clear nonlinear upward trend with X1, even though no complex hidden layers were manually designed. This shows that the AF network can model nonlinearity efficiently with simple transformations.
 
 Another advantage is interpretability. Because the AF network was designed to learn specific types of feature mappings (rather than arbitrary complex patterns), we could directly observe how the inputs influenced the outputs through the plotted response curves. For instance, the nearly linear but slightly sloped trends for `r expression(α)` and `r expression(β)` made it clear how X1 and X2 affected the probabilities. In contrast, a standard feedforward network would have created highly entangled hidden features, making it difficult to extract such insights. Finally, by constraining the feature space, the AF network also helped prevent overfitting, which is especially important when working with limited training data, as we had in this Prac.
+
