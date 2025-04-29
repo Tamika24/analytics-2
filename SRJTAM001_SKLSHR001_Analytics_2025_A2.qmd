@@ -1,8 +1,34 @@
 ---
 title: "STA4026S Assignment 2 - Collider Data Classification"
 author: "Shriyaa Sooklal SKLSHR001 and Tamika Surajpal SRJTAM001"
-format: pdf
 editor: visual
+<<<<<<< HEAD
+=======
+format:
+  pdf:
+    documentclass: article        
+    geometry:                     
+      - margin=1in
+    includes:
+      in-header: |
+        % turn off stretchy vertical glue
+        \raggedbottom
+
+        % no extra space between paragraphs
+        \setlength{\parskip}{0pt}
+        \setlength{\parindent}{1em}
+
+        % tighten spacing around section headings
+        \usepackage{titlesec}
+        \titlespacing*{\section}
+          {0pt}{0.5\baselineskip}{0.5\baselineskip}
+        \titlespacing*{\subsection}
+          {0pt}{0.5\baselineskip}{0.5\baselineskip}
+
+        % if you have lists (itemize/enumerate), remove their extra gaps
+        \usepackage{enumitem}
+        \setlist{nosep}
+>>>>>>> 67d697337753afb88644e00574f3e06972417766
 ---
 
 ```{r, warning=FALSE, message=FALSE}
@@ -192,6 +218,7 @@ obj_pen <- function(theta) {
   return(result$obj)
 }
 
+<<<<<<< HEAD
 # Initial random theta
 p <- ncol(X_train)
 q <- ncol(Y_train)
@@ -199,6 +226,11 @@ m <- 4
 npars  <- 2*p^2 + 2*p + 2*p*m + 2*m + m^2 + m*q + q
 theta_rand = runif(npars,-1,1)
 obj_pen(theta_rand)
+=======
+# Step 4: Grid search over regularization parameter v
+v_values <- exp(seq(-6, 2, length.out = 15))
+validation_errors <- numeric(length(v_values))
+>>>>>>> 67d697337753afb88644e00574f3e06972417766
 
 res_opt = nlm(obj_pen,theta_rand,iterlim = 1000)
 res_opt
@@ -217,8 +249,17 @@ for (i in 1:n_nu) {
   validation_errors[i] = res_val$obj
 }
 
+<<<<<<< HEAD
 best_i  <- which.min(validation_errors)
 best_v <- v_values[best_i]
+=======
+# Step 5: Plot validation error vs v
+plot(v_values, validation_errors, type = "b", col = "blue", pch = 19,
+     asp = 1, log="x", 
+     xlab = "Regularization Parameter (ν)", ylab = "Validation Error",
+     main = "Validation Error vs Regularization Parameter (ν)")
+grid()
+>>>>>>> 67d697337753afb88644e00574f3e06972417766
 
 par(pty="s")
 plot(v_values, validation_errors, type = 'b', log = "x", pch = 16,
