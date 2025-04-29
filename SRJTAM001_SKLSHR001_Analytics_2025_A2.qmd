@@ -26,7 +26,6 @@ format:
         % if you have lists (itemize/enumerate), remove their extra gaps
         \usepackage{enumitem}
         \setlist{nosep}
-
 ---
 
 ```{r, warning=FALSE, message=FALSE}
@@ -223,10 +222,8 @@ q <- ncol(Y_train)
 m <- 4
 npars  <- 2*p^2 + 2*p + 2*p*m + 2*m + m^2 + m*q + q
 theta_rand = runif(npars,-1,1)
-obj_pen(theta_rand)
 
 res_opt = nlm(obj_pen,theta_rand,iterlim = 1000)
-res_opt
 
 # Step 4: Grid search over regularization parameter nu
 n_v <- 25
@@ -234,19 +231,19 @@ validation_errors = rep(NA,n_v)
 v_values <- exp(seq(-10, 1, length.out = n_v))
 #validation_errors <- numeric(length(v_values))
 
-for (i in 1:n_v) {
+for (i in 1:n_v) 
+  {
   v <- v_values[i]
   res_opt = nlm(obj_pen,theta_rand,iterlim = 1000)
   
   res_val = af_forward(X_valid,Y_valid,res_opt$estimate,m,0)
   validation_errors[i] = res_val$obj
-}
+  }
 
 best_i  <- which.min(validation_errors)
 best_v <- v_values[best_i]
 
 # Step 5: Plot validation error vs v
-par(pty="s")
 plot(v_values, validation_errors, type = 'b', log = "x", pch = 16,
      xlab = expression(nu),
      ylab = "Validation Cross‐Entropy Loss",
@@ -270,7 +267,7 @@ The optimal regularization parameter is `r round(best_v, 4)` as it minimizes the
 #| fig-cap: "This figure shows two faceted line plots showing how the neural network’s predicted class probabilities vary as X1 changes, separately for Detector Type A (X3 = 1) and Type B (X3 = 0)."
 
 m <- 4
-
+v <- best_v
 # Re-train model at best nu
 obj_pen_best <- function(pars)
   {
@@ -329,9 +326,8 @@ prepare_plot_data <- function(curve_data, varname, type_label)
   return(df)
   }
 
-plot_data_X1 <- bind_rows(
-  prepare_plot_data(curve_X1_A, "X1", "Type A"),
-  prepare_plot_data(curve_X1_B, "X1", "Type B"))
+plot_data_X1 <- bind_rows(prepare_plot_data(curve_X1_A, "X1", "Type A"),
+                          prepare_plot_data(curve_X1_B, "X1", "Type B"))
 
 ggplot(plot_data_X1, aes(x = X1, y = Probability, color = Class)) +
   geom_line() +
@@ -347,9 +343,8 @@ ggplot(plot_data_X1, aes(x = X1, y = Probability, color = Class)) +
 #| label: fig-X2
 #| fig-cap: "This figure shows two faceted line plots showing how the neural network’s predicted class probabilities vary as X2 changes, separately for Detector Type A (X3 = 1) and Type B (X3 = 0)."
 
-plot_data_X2 <- bind_rows(
-  prepare_plot_data(curve_X2_A, "X2", "Type A"),
-  prepare_plot_data(curve_X2_B, "X2", "Type B"))
+plot_data_X2 <- bind_rows(prepare_plot_data(curve_X2_A, "X2", "Type A"),
+                          prepare_plot_data(curve_X2_B, "X2", "Type B"))
 
 ggplot(plot_data_X2, aes(x = X2, y = Probability, color = Class)) +
   geom_line() +
@@ -362,6 +357,6 @@ ggplot(plot_data_X2, aes(x = X2, y = Probability, color = Class)) +
 
 # i)
 
-One practical advantage of using an AF network over a standard feedforward neural network is that AF networks automatically discover important transformations of the input variables, such as quadratic terms and interactions, without requiring manual feature engineering. In our Prac, we saw that the AF network easily captured structured nonlinear relationships between X1, X2, and the class probabilities `r (expression(alpha), expression(beta), expression(rho))` — for example, the probability of class `r expression(ρ)` showed a clear nonlinear upward trend with X1, even though no complex hidden layers were manually designed. This shows that the AF network can model nonlinearity efficiently with simple transformations.
+One practical advantage of using an AF network over a standard feed forward neural network is that AF networks automatically discover important transformations of the input variables, such as quadratic terms and interactions, without requiring manual feature engineering. In our Prac, we saw that the AF network easily captured structured nonlinear relationships between X1, X2, and the class probabilities $\alpha$, $\beta$, $\rho$ — for example, the probability of class $\rho$ showed a clear nonlinear upward trend with X1, even though no complex hidden layers were manually designed. This shows that the AF network can model nonlinearity efficiently with simple transformations.
 
-Another advantage is interpretability. Because the AF network was designed to learn specific types of feature mappings (rather than arbitrary complex patterns), we could directly observe how the inputs influenced the outputs through the plotted response curves. For instance, the nearly linear but slightly sloped trends for `r expression(α)` and `r expression(β)` made it clear how X1 and X2 affected the probabilities. In contrast, a standard feedforward network would have created highly entangled hidden features, making it difficult to extract such insights. Finally, by constraining the feature space, the AF network also helped prevent overfitting, which is especially important when working with limited training data, as we had in this Prac.
+Another advantage is interpretability. Because the AF network was designed to learn specific types of feature mappings (rather than arbitrary complex patterns), we could directly observe how the inputs influenced the outputs through the plotted response curves. For instance, the nearly linear but slightly sloped trends for $\alpha$ and $\beta$ made it clear how X1 and X2 affected the probabilities. In contrast, a standard feed forward network would have created highly entangled hidden features, making it difficult to extract such insights. Finally, by constraining the feature space, the AF network also helped prevent over fitting, which is especially important when working with limited training data, as we had in this Prac.

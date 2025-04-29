@@ -81,7 +81,7 @@ Y_valid <- as.matrix(valid_data[, 4:6])  # Response variables (one-hot encoded)
 
 # Step 3: Define the objective function with regularization
 v=0.01
-obj_pen() <- function(pars) {
+obj_pen <- function(pars) {
   result <- af_forward(X_train, Y_train, theta, m, v)
   return(result$obj)
 }
