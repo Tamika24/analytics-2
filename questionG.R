@@ -58,7 +58,9 @@ abline(v = best_nu, col = "red", lty = 2)
 points(best_nu, Val_error[best_i], col = "red", pch = 16)
 legend("topright",
        legend = paste0("Chosen ν = ", signif(best_nu,3)),
-       col    = "red", lty = 2, pch = 16, bty = "n")set.seed(2025)
+       col    = "red", lty = 2, pch = 16, bty = "n")
+
+
 ############################################################
 
 set.seed(2025)

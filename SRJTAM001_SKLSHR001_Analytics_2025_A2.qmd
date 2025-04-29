@@ -181,11 +181,15 @@ train_data <- dat[train_indices, ]
 valid_data <- dat[-train_indices, ]
 
 # Step 2: Prepare the training and validation datasets
-X_train <- as.matrix(train_data[, 1:3])  # Input features
-Y_train <- as.matrix(train_data[, 4:6])  # Response variables(one-hot encoded)
+# Input features
+X_train <- as.matrix(train_data[, 1:3]) 
+# Response variables(one-hot encoded)
+Y_train <- as.matrix(train_data[, 4:6])  
 
-X_valid <- as.matrix(valid_data[, 1:3])  # Input features
-Y_valid <- as.matrix(valid_data[, 4:6])  # Response variables(one-hot encoded)
+# Input features
+X_valid <- as.matrix(valid_data[, 1:3]) 
+# Response variables(one-hot encoded)
+Y_valid <- as.matrix(valid_data[, 4:6])
 
 # Step 3: Define the objective function with regularization
 objective_fn <- function(theta, X, Y, m, v) {
@@ -208,7 +212,7 @@ for (i in 1:length(v_values)) {
   theta_rand <- runif(npars, -1, 1)
   
   # Fit the model using optim() to minimize the objective function
-  fit <- optim(theta_rand, objective_fn, X = X_train, Y = Y_train, m = 4, v=v)
+  fit <- optim(theta_rand, objective_fn, X = X_train, Y = Y_train, m = 4,               v=v)
   
   # Get the predicted probabilities for validation set
   Yhat_valid <- af_forward(X_valid, Y_valid, fit$par, m = 4, v=v)$probs
@@ -241,17 +245,19 @@ best_nu <- exp(-2)
 nu <- best_nu
 
 # Re-train model at best nu
-obj_pen_best <- function(pars) {
+obj_pen_best <- function(pars)
+  {
   af_forward(X_train, Y_train, pars, m, nu)$obj
-}
+  }
 
-theta_rand <- runif(npars, -1, 1)  # Reinitialize random parameters
+# Reinitialize random parameters
+theta_rand <- runif(npars, -1, 1)
+
 res_opt_best <- nlm(obj_pen_best, p = theta_rand, iterlim = 1000)
 theta_best <- res_opt_best$estimate
 
 
 # Plot response curves by varying X1 and X2 separately
-
 # Helper function to predict probability curves
 predict_curve <- function(var_seq, varname, fixed_X2 = 0, fixed_X3 = 0, pars, m) 
   {
@@ -265,14 +271,14 @@ predict_curve <- function(var_seq, varname, fixed_X2 = 0, fixed_X3 = 0, pars, m)
   
   q <- 3 
   
-  preds <- af_forward(input, Y = matrix(0, nrow=n, ncol=q), pars, m, v=0)$probs
+  preds <- af_forward(input, Y = matrix(0, nrow=n, ncol=q), pars, m, v=0.                      )$probs
   
   out <- as.data.frame(preds)
   colnames(out) <- c("alpha", "beta", "rho")
   out[[varname]] <- var_seq
   
   return(out)
-}
+  }
 
 # Create sequences
 X_seq <- seq(-4, 4, length.out = 100)
@@ -286,19 +292,19 @@ curve_X2_A <- predict_curve(X_seq, "X2", fixed_X2=0, fixed_X3=1, theta_best, m)
 curve_X2_B <- predict_curve(X_seq, "X2", fixed_X2=0, fixed_X3=0, theta_best, m)
 
 # Helper to prepare data
-prepare_plot_data <- function(curve_data, varname, type_label) {
+prepare_plot_data <- function(curve_data, varname, type_label) 
+  {
   df <- as.data.frame(curve_data)
   colnames(df) <- c(varname, "alpha", "beta", "rho")
   df$Detector <- type_label
   df <- pivot_longer(df, cols = c("alpha", "beta", "rho"),
                      names_to = "Class", values_to = "Probability")
   return(df)
-}
+  }
 
 plot_data_X1 <- bind_rows(
   prepare_plot_data(curve_X1_A, "X1", "Type A"),
-  prepare_plot_data(curve_X1_B, "X1", "Type B")
-)
+  prepare_plot_data(curve_X1_B, "X1", "Type B"))
 
 ggplot(plot_data_X1, aes(x = X1, y = Probability, color = Class)) +
   geom_line() +
@@ -310,8 +316,7 @@ ggplot(plot_data_X1, aes(x = X1, y = Probability, color = Class)) +
 
 plot_data_X2 <- bind_rows(
   prepare_plot_data(curve_X2_A, "X2", "Type A"),
-  prepare_plot_data(curve_X2_B, "X2", "Type B")
-)
+  prepare_plot_data(curve_X2_B, "X2", "Type B"))
 
 ggplot(plot_data_X2, aes(x = X2, y = Probability, color = Class)) +
   geom_line() +
