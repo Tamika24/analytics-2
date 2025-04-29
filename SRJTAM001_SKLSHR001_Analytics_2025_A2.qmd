@@ -2,8 +2,6 @@
 title: "STA4026S Assignment 2 - Collider Data Classification"
 author: "Shriyaa Sooklal SKLSHR001 and Tamika Surajpal SRJTAM001"
 editor: visual
-<<<<<<< HEAD
-=======
 format:
   pdf:
     documentclass: article        
@@ -28,7 +26,7 @@ format:
         % if you have lists (itemize/enumerate), remove their extra gaps
         \usepackage{enumitem}
         \setlist{nosep}
->>>>>>> 67d697337753afb88644e00574f3e06972417766
+
 ---
 
 ```{r, warning=FALSE, message=FALSE}
@@ -213,12 +211,12 @@ Y_valid <- as.matrix(valid_data[, 4:6])  # Response variables (one-hot encoded)
 
 # Step 3: Define the objective function with regularization
 v=0.01
-obj_pen <- function(theta) {
+obj_pen <- function(theta) 
+  {
   result <- af_forward(X_train, Y_train, theta, m, v)
   return(result$obj)
-}
+  }
 
-<<<<<<< HEAD
 # Initial random theta
 p <- ncol(X_train)
 q <- ncol(Y_train)
@@ -226,22 +224,17 @@ m <- 4
 npars  <- 2*p^2 + 2*p + 2*p*m + 2*m + m^2 + m*q + q
 theta_rand = runif(npars,-1,1)
 obj_pen(theta_rand)
-=======
-# Step 4: Grid search over regularization parameter v
-v_values <- exp(seq(-6, 2, length.out = 15))
-validation_errors <- numeric(length(v_values))
->>>>>>> 67d697337753afb88644e00574f3e06972417766
 
 res_opt = nlm(obj_pen,theta_rand,iterlim = 1000)
 res_opt
 
 # Step 4: Grid search over regularization parameter nu
-n_nu <- 25
-validation_errors = rep(NA,n_nu)
-v_values <- exp(seq(-10, 1, length.out = n_nu))
+n_v <- 25
+validation_errors = rep(NA,n_v)
+v_values <- exp(seq(-10, 1, length.out = n_v))
 #validation_errors <- numeric(length(v_values))
 
-for (i in 1:n_nu) {
+for (i in 1:n_v) {
   v <- v_values[i]
   res_opt = nlm(obj_pen,theta_rand,iterlim = 1000)
   
@@ -249,18 +242,10 @@ for (i in 1:n_nu) {
   validation_errors[i] = res_val$obj
 }
 
-<<<<<<< HEAD
 best_i  <- which.min(validation_errors)
 best_v <- v_values[best_i]
-=======
-# Step 5: Plot validation error vs v
-plot(v_values, validation_errors, type = "b", col = "blue", pch = 19,
-     asp = 1, log="x", 
-     xlab = "Regularization Parameter (ν)", ylab = "Validation Error",
-     main = "Validation Error vs Regularization Parameter (ν)")
-grid()
->>>>>>> 67d697337753afb88644e00574f3e06972417766
 
+# Step 5: Plot validation error vs v
 par(pty="s")
 plot(v_values, validation_errors, type = 'b', log = "x", pch = 16,
      xlab = expression(nu),
