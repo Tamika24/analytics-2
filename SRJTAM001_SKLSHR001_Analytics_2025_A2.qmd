@@ -268,76 +268,65 @@ The optimal regularization parameter is `r round(best_v, 4)` as it minimizes the
 #| label: fig-X1
 #| fig-cap: "This figure shows two faceted line plots showing how the neural network’s predicted class probabilities vary as X1 changes, separately for Detector Type A (X3 = 1) and Type B (X3 = 0)."
 
-m <- 4
-v <- best_v
-# Re-train model at best nu
-obj_pen_best <- function(pars)
-  {
-  af_forward(X_train, Y_train, pars, m, v)$obj
-  }
+# 1) Compute the medians of X1 and X2 from your data
+X1_med <- median(dat$X1)
+X2_med <- median(dat$X2)
 
-# Reinitialize random parameters
-theta_rand <- runif(npars, -1, 1)
-
-res_opt_best <- nlm(obj_pen_best, p = theta_rand, iterlim = 1000)
-theta_best <- res_opt_best$estimate
-
-
-# Plot response curves by varying X1 and X2 separately
-# Helper function to predict probability curves
-predict_curve <- function(var_seq, varname, fixed_X2 = 0, fixed_X3 = 0, pars, m) 
-  {
+# 2) Improved helper: fix X1, X2, X3 separately
+predict_curve <- function(var_seq, varname,
+                          fixed_X1, fixed_X2, fixed_X3,
+                          pars, m) {
   n <- length(var_seq)
-  input <- matrix(0, nrow = n, ncol = 3)
-  colnames(input) <- c("X1", "X2", "X3")
+  input <- matrix(0, n, 3)
+  colnames(input) <- c("X1","X2","X3")
   
-  input[, "X1"] <- if (varname == "X1") var_seq else fixed_X2
-  input[, "X2"] <- if (varname == "X2") var_seq else fixed_X2
-  input[, "X3"] <- fixed_X3
+  # Sweep the target variable; hold the others at their medians
+  input[,"X1"] <- if(varname=="X1") var_seq else fixed_X1
+  input[,"X2"] <- if(varname=="X2") var_seq else fixed_X2
+  input[,"X3"] <- fixed_X3
   
-  q <- 3 
+  # Forward pass to get probabilities
+  probs <- af_forward(input,
+                      Y     = matrix(0,n,3),
+                      theta = theta_best,
+                      m     = m,
+                      nu    = 0)$probs
   
-  preds <- af_forward(input, Y = matrix(0, nrow=n, ncol=q), pars, m, v=0.                      )$probs
-  
-  out <- as.data.frame(preds)
-  colnames(out) <- c("alpha", "beta", "rho")
-  out[[varname]] <- var_seq
-  
-  return(out)
-  }
+  # Return a data.frame with var, class-probs
+  df <- as.data.frame(probs)
+  names(df) <- c("alpha","beta","rho")
+  df[[varname]] <- var_seq
+  df
+}
 
-# Create sequences
-X_seq <- seq(-4, 4, length.out = 100)
+# 3) Build sequences over the real data range
+X1_seq <- seq(min(dat$X1), max(dat$X1), length.out = 200)
+X2_seq <- seq(min(dat$X2), max(dat$X2), length.out = 200)
 
-# Response curves for Detector Type A (X3=1) and Type B (X3=0)
+# 4) Generate curves for Detector A (X3=1) vs B (X3=0)
+df1_A <- predict_curve(X1_seq, "X1", X1_med, X2_med, 1, theta_best, m)
+df1_B <- predict_curve(X1_seq, "X1", X1_med, X2_med, 0, theta_best, m)
+df2_A <- predict_curve(X2_seq, "X2", X1_med, X2_med, 1, theta_best, m)
+df2_B <- predict_curve(X2_seq, "X2", X1_med, X2_med, 0, theta_best, m)
 
-curve_X1_A <- predict_curve(X_seq, "X1", fixed_X2=0, fixed_X3=1, theta_best, m)
-curve_X1_B <- predict_curve(X_seq, "X1", fixed_X2=0, fixed_X3=0, theta_best, m)
-
-curve_X2_A <- predict_curve(X_seq, "X2", fixed_X2=0, fixed_X3=1, theta_best, m)
-curve_X2_B <- predict_curve(X_seq, "X2", fixed_X2=0, fixed_X3=0, theta_best, m)
-
-# Helper to prepare data
-prepare_plot_data <- function(curve_data, varname, type_label) 
-  {
-  df <- as.data.frame(curve_data)
-  colnames(df) <- c(varname, "alpha", "beta", "rho")
-  df$Detector <- type_label
-  df <- pivot_longer(df, cols = c("alpha", "beta", "rho"),
-                     names_to = "Class", values_to = "Probability")
-  return(df)
-  }
-
-plot_data_X1 <- bind_rows(prepare_plot_data(curve_X1_A, "X1", "Type A"),
-                          prepare_plot_data(curve_X1_B, "X1", "Type B"))
+# 5) Reshape and plot for X1
+plot_data_X1 <- bind_rows(
+  transform(df1_A, Detector="Type A"),
+  transform(df1_B, Detector="Type B")
+) %>%
+  pivot_longer(cols = c("alpha","beta","rho"),
+               names_to  = "Class",
+               values_to = "Probability")
 
 ggplot(plot_data_X1, aes(x = X1, y = Probability, color = Class)) +
-  geom_line() +
+  geom_line(size=1) +
   facet_wrap(~ Detector) +
-  labs(title = "Predicted Class Probabilities vs X1",
-       x = "X1", y = "Probability") +
+  labs(title = "Response Curves: P(class) vs X1 by Detector",
+       x = "X1", y = "Predicted Probability") +
   theme_minimal() +
   theme(aspect.ratio = 1)
+
+
 
 ```
 
@@ -345,14 +334,20 @@ ggplot(plot_data_X1, aes(x = X1, y = Probability, color = Class)) +
 #| label: fig-X2
 #| fig-cap: "This figure shows two faceted line plots showing how the neural network’s predicted class probabilities vary as X2 changes, separately for Detector Type A (X3 = 1) and Type B (X3 = 0)."
 
-plot_data_X2 <- bind_rows(prepare_plot_data(curve_X2_A, "X2", "Type A"),
-                          prepare_plot_data(curve_X2_B, "X2", "Type B"))
+# 6) Reshape and plot for X2
+plot_data_X2 <- bind_rows(
+  transform(df2_A, Detector="Type A"),
+  transform(df2_B, Detector="Type B")
+) %>%
+  pivot_longer(cols = c("alpha","beta","rho"),
+               names_to  = "Class",
+               values_to = "Probability")
 
 ggplot(plot_data_X2, aes(x = X2, y = Probability, color = Class)) +
-  geom_line() +
+  geom_line(size=1) +
   facet_wrap(~ Detector) +
-  labs(title = "Predicted Class Probabilities vs X2",
-       x = "X2", y = "Probability") +
+  labs(title = "Response Curves: P(class) vs X2 by Detector",
+       x = "X2", y = "Predicted Probability") +
   theme_minimal() +
   theme(aspect.ratio = 1)
 ```
