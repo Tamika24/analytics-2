@@ -4,6 +4,7 @@ author: "Shriyaa Sooklal SKLSHR001 and Tamika Surajpal SRJTAM001"
 editor: visual
 format:
   pdf:
+    code-overflow: wrap
     documentclass: article        
     geometry:                     
       - margin=1in
@@ -26,7 +27,6 @@ format:
         % if you have lists (itemize/enumerate), remove their extra gaps
         \usepackage{enumitem}
         \setlist{nosep}
-code-overflow: wrap
 ---
 
 ```{r, warning=FALSE, message=FALSE}
@@ -52,7 +52,7 @@ opts_chunk$set(tidy.opts=list(width.cutoff=80),tidy=TRUE)
 ```{r, warning=FALSE, message=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #| echo: true
 #| label: fig-scatter
-#| fig-cap: "This is a scatter plot of the Collider data in the X1 and X2 feature space, with points colour-coded by true particle class (α in red, β in blue, ρ in green), illustrating non-linear boundaries that motivate using a neural network for classification."
+#| fig-cap: "This is a scatter plot of the Collider data in the X1 and X2 feature space, with points colour-coded by true particle class, illustrating non-linear boundaries that motivate using a neural network for classification."
 
 dat$response <- apply(dat[, c("Y1", "Y2", "Y3")], 1, function (x){
 
@@ -292,11 +292,13 @@ grid_X1 <- expand.grid(X1 = X1_seq, X2 = X2_med, X3 = c(0,1))
 grid_X2 <- expand.grid(X1 = X1_med, X2 = X2_seq, X3 = c(0,1))
 
 #Get predicted probabilities (v = 0 for final preds)
-probs_X1 <- af_forward(X = as.matrix(grid_X1), Y = matrix(0, nrow(grid_X1), 3),
-            theta = theta_best, m= m, v= 0)$probs
+probs_X1 <- af_forward(X = as.matrix(grid_X1), 
+                       Y = matrix(0, nrow(grid_X1), 3), 
+                       theta = theta_best, m= m, v= 0)$probs
 
-probs_X2 <- af_forward(X= as.matrix(grid_X2),Y= matrix(0, nrow(grid_X2), 3),
-            theta = theta_best,m= m, v= 0)$probs
+probs_X2 <- af_forward(X= as.matrix(grid_X2),
+                       Y= matrix(0, nrow(grid_X2), 3),
+                      theta = theta_best,m= m, v= 0)$probs
 
 #Attach class names and reshape to long form 
 df1 <- cbind(grid_X1, setNames(as.data.frame(probs_X1),c("alpha","beta","rho")))
@@ -315,9 +317,11 @@ df2_long <- pivot_longer(df2,cols= c("alpha","beta","rho"),names_to= "Class",
 
 #Plot response curves for X1 
 ggplot(df1_long, aes(x = X1, y = Probability, color = Class)) + 
-  geom_line(size = 1) + facet_wrap(~ Detector) + labs(title = "Response Curves: P(class) vs X1 by Detector Type",x= "X1", y= "Predicted Probability",
-                                                      color ="Class")+
-  theme_minimal()+theme(aspect.ratio = 1)
+  geom_line(size = 1) + 
+  facet_wrap(~ Detector) + 
+  labs(title = "Response Curves: P(class) vs X1 by Detector Type",x= "X1", y= "Predicted Probability", color ="Class") + 
+  theme_minimal() +
+  theme(aspect.ratio = 1)
 ```
 
 ```{r}
@@ -325,16 +329,17 @@ ggplot(df1_long, aes(x = X1, y = Probability, color = Class)) +
 #| fig-cap: "This figure shows two faceted line plots showing how the neural network’s predicted class probabilities vary as X2 changes, separately for Detector Type A (X3 = 1) and Type B (X3 = 0)."
 
 #Plot response curves for X2
-ggplot(df2_long, aes(x = X2, y = Probability, color = Class)) +
-  geom_line(size = 1) + facet_wrap(~ Detector) +labs(title = "Response Curves: P(class) vs X2 by Detector Type",x= "X2",y= "Predicted Probability", 
-                                                     color = "Class")+
-  theme_minimal()+
+ggplot(df2_long, aes(x = X2, y = Probability, color = Class)) + 
+  geom_line(size = 1) + 
+  facet_wrap(~ Detector) + 
+  labs(title = "Response Curves: P(class) vs X2 by Detector Type",x= "X2",y= "Predicted Probability", color = "Class") + 
+  theme_minimal() + 
   theme(aspect.ratio = 1)
 
 ```
 
 # i)
 
-One practical advantage of using an AF network over a standard feed forward neural network is that AF networks automatically discover important transformations of the input variables, such as quadratic terms and interactions, without requiring manual feature engineering. In our Prac, we saw that the AF network easily captured structured nonlinear relationships between X1, X2, and the class probabilities $\alpha$, $\beta$, $\rho$ — for example, the probability of class $\rho$ showed a clear nonlinear upward trend with X1, even though no complex hidden layers were manually designed. This shows that the AF network can model nonlinearity efficiently with simple transformations.
+One practical advantage of using an AF network over a standard feed forward neural network is that AF networks automatically discover important transformations of the input variables, such as quadratic terms and interactions, without requiring manual feature engineering. In our Prac, we saw that the AF network easily captured structured nonlinear relationships between X1, X2, and the class probabilities $\alpha$, $\beta$, $\rho$ — for example, for X1, the curves are very sharp and sigmoidal, wherein each class dominates a specific region: beta dominates at low X1 values, rho dominates around middle values and alpha dominates at high X1 values. This shows that the AF network can model nonlinearity efficiently with simple transformations.
 
 Another key benefit is interpretability. Because the AF‐network augments the feature space in a controlled way, we can directly read off how each input drives each class probability by plotting response curves. Part (h) showed that the entire family of red, green and blue curves for Detector A lies almost perfectly on top of the matching curves for Detector B. Therefore, flipping X3 from 0-\>1 produces no shift in P($\alpha$), P($\beta$) or P($\rho$). This tells us that the model is truly exploiting the nonlinear structure in X₁,X₂. And once those two coordinates are accounted for, the detector flag carries no extra information and is effectively ignored by the fitted network. By, constraining the feature space to just those learned augmentations, the AF‐network also guards against over-fitting which is crucial when you have only a few hundred labelled particles.
