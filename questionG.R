@@ -63,56 +63,8 @@ legend("topright",
 
 ############################################################
 
-set.seed(2025)
-m <- 4
-# Step 1: Split the data into training and validation sets (80%/20%)
-n <- nrow(dat)
-train_size <- floor(0.8 * n)
-train_indices <- sample(1:n, train_size)
-train_data <- dat[train_indices, ]
-valid_data <- dat[-train_indices, ]
 
-# Step 2: Prepare the training and validation datasets
-X_train <- as.matrix(train_data[, 1:3])  # Input features
-Y_train <- as.matrix(train_data[, 4:6])  # Response variables (one-hot encoded)
-
-X_valid <- as.matrix(valid_data[, 1:3])  # Input features
-Y_valid <- as.matrix(valid_data[, 4:6])  # Response variables (one-hot encoded)
-
-# Step 3: Define the objective function with regularization
-v=0.01
-obj_pen() <- function(pars) {
-  result <- af_forward(X_train, Y_train, theta, m, v)
-  return(result$obj)
-}
-
-theta_rand = runif(npars,-1,1)
-obj_pen(theta_rand)
-
-res_opt = nlm(obj_pen,theta_rand,iterlim = 1000)
-res_opt
-
-# Step 4: Grid search over regularization parameter nu
-n_nu <- 15
-validation_errors = rep(NA,n_nu)
-v_values <- exp(seq(-6, 2, length.out = n_nu))
-#validation_errors <- numeric(length(v_values))
-
-for (i in 1:n_nu) {
-  v <- v_values[i]
-  res_opt = nlm(obj_pen,theta_rand,iterlim = 1000)
   
-  res_val = af_forward(X_val,Y_val,res_opt$estimate,m,0)
-  validation_errors[i] = res_val$obj
-}
-
-plot(validation_errors~v_values,type = 'b')
-######################################################  
-  # Initial random theta
-  p <- ncol(X_train)
-  q <- ncol(Y_train)
-  m <- 4
-  npars  <- 2*p^2 + 2*p + 2*p*m + 2*m + m^2 + m*q + q
   theta_rand <- runif(npars, -1, 1)
   
   # Fit the model using optim() to minimize the objective function
