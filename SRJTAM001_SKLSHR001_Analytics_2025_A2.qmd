@@ -290,7 +290,7 @@ predict_curve <- function(var_seq, varname,
                       Y     = matrix(0,n,3),
                       theta = theta_best,
                       m     = m,
-                      nu    = 0)$probs
+                      v    = 0)$probs
   
   # Return a data.frame with var, class-probs
   df <- as.data.frame(probs)
