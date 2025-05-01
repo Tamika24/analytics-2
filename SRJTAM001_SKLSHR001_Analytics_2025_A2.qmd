@@ -59,14 +59,13 @@ dat$response <- apply(dat[, c("Y1", "Y2", "Y3")], 1, function (x){
   if (x[2] == 1) return("code-Beta")
   if (x[3] == 1) return("code-Rho")
 })
-
+#1:1 aspect ratio
 ggplot(dat, aes(x=X1, y=X2, color=response))+
          geom_point(size=2)+
-         coord_fixed()+ # 1:1 aspect ratio
+         coord_fixed()+
          labs(title = "Scatterplot of particles in feature space", 
               x = "First coordinate (X1)", y = "Second coordinate (X2)", 
-              color = "Particle type")+
-         theme_minimal()
+              color = "Particle type")+ theme_minimal()
 
 ```
 
@@ -188,7 +187,7 @@ af_forward <- function(X, Y, theta, m, v)
 
 # g)
 
-```{r, warning=FALSE, message=TRUE}
+```{r, warning=FALSE, message=TRUE, cache=TRUE}
 #| echo: true
 #| label: fig-valid
 #| fig-cap: "Validation cross-entropy loss on the held-out set plotted against the L2-regularization parameter v(log-scaled) for an AF-network with m=4. The red dashed line marks the chosen optimal v. We use a logarithmic scale because v ranges over several orders of magnitude; the log‐scale stretches out the small v region so that the classic U‐shaped trade‐off between under‐ and over‐regularization becomes visible."
@@ -248,13 +247,13 @@ best_v <- v_values[best_i]
 # Step 5: Plot validation error vs v
 plot(v_values, validation_errors, type = 'b', log = "x", pch = 16,
      xlab = expression(nu),
-     ylab = "Validation Cross‐Entropy Loss",
-     main = "Validation Loss vs Regularization (m = 4)",
+     ylab = "Validation Cross-Entropy Loss",
+     main = "Validation Loss vs Regularization",
      asp = 1)
 abline(v = best_v, col = "red", lty = 2)
 points(best_v, validation_errors[best_i], col = "red", pch = 16)
-legend("topright",
-       legend = paste0("Chosen ν = ", signif(best_v,3)),
+legend("bottomright",
+       legend = paste0("Chosen v=", signif(best_v,3)),
        col    = "red", lty = 2, pch = 16, bty = "n")
 
 ```
@@ -268,92 +267,73 @@ The optimal regularization parameter is `r round(best_v, 4)` as it minimizes the
 #| label: fig-X1
 #| fig-cap: "This figure shows two faceted line plots showing how the neural network’s predicted class probabilities vary as X1 changes, separately for Detector Type A (X3 = 1) and Type B (X3 = 0)."
 
-# 1) Compute the medians of X1 and X2 from your data
+# Fit the final model at optimal regularization 
+m <- 4
+p <- ncol(X_train)
+q <- ncol(Y_train)
+npars <- 2*p^2 + 2*p + 2*p*m + 2*m + m^2 + m*q + q
+
+theta_init <- runif(npars, -1, 1)
+obj_pen_best <- function(theta) {
+  af_forward(X_train, Y_train, theta, m, best_v)$obj
+}
+res_opt_best <- nlm(obj_pen_best, theta_init, iterlim = 1000)
+theta_best   <- res_opt_best$estimate
+
+#Prepare medians and sequences
 X1_med <- median(dat$X1)
 X2_med <- median(dat$X2)
-
-# 2) Improved helper: fix X1, X2, X3 separately
-predict_curve <- function(var_seq, varname,
-                          fixed_X1, fixed_X2, fixed_X3,
-                          pars, m) {
-  n <- length(var_seq)
-  input <- matrix(0, n, 3)
-  colnames(input) <- c("X1","X2","X3")
-  
-  # Sweep the target variable; hold the others at their medians
-  input[,"X1"] <- if(varname=="X1") var_seq else fixed_X1
-  input[,"X2"] <- if(varname=="X2") var_seq else fixed_X2
-  input[,"X3"] <- fixed_X3
-  
-  # Forward pass to get probabilities
-  probs <- af_forward(input,
-                      Y     = matrix(0,n,3),
-                      theta = theta_best,
-                      m     = m,
-                      v    = 0)$probs
-  
-  # Return a data.frame with var, class-probs
-  df <- as.data.frame(probs)
-  names(df) <- c("alpha","beta","rho")
-  df[[varname]] <- var_seq
-  df
-}
-
-# 3) Build sequences over the real data range
 X1_seq <- seq(min(dat$X1), max(dat$X1), length.out = 200)
 X2_seq <- seq(min(dat$X2), max(dat$X2), length.out = 200)
 
-# 4) Generate curves for Detector A (X3=1) vs B (X3=0)
-df1_A <- predict_curve(X1_seq, "X1", X1_med, X2_med, 1, theta_best, m)
-df1_B <- predict_curve(X1_seq, "X1", X1_med, X2_med, 0, theta_best, m)
-df2_A <- predict_curve(X2_seq, "X2", X1_med, X2_med, 1, theta_best, m)
-df2_B <- predict_curve(X2_seq, "X2", X1_med, X2_med, 0, theta_best, m)
+#Build grids for sweeping X1 and X2
+grid_X1 <- expand.grid(X1 = X1_seq, X2 = X2_med, X3 = c(0,1))
+grid_X2 <- expand.grid(X1 = X1_med, X2 = X2_seq, X3 = c(0,1))
 
-# 5) Reshape and plot for X1
-plot_data_X1 <- bind_rows(
-  transform(df1_A, Detector="Type A"),
-  transform(df1_B, Detector="Type B")
-) %>%
-  pivot_longer(cols = c("alpha","beta","rho"),
-               names_to  = "Class",
-               values_to = "Probability")
+#Get predicted probabilities (v = 0 for final preds)
+probs_X1 <- af_forward(X = as.matrix(grid_X1), Y = matrix(0, nrow(grid_X1), 3),
+            theta = theta_best, m= m, v= 0)$probs
 
-ggplot(plot_data_X1, aes(x = X1, y = Probability, color = Class)) +
-  geom_line(size=1) +
-  facet_wrap(~ Detector) +
-  labs(title = "Response Curves: P(class) vs X1 by Detector",
-       x = "X1", y = "Predicted Probability") +
-  theme_minimal() +
-  theme(aspect.ratio = 1)
+probs_X2 <- af_forward(X= as.matrix(grid_X2),Y= matrix(0, nrow(grid_X2), 3),
+            theta = theta_best,m= m, v= 0)$probs
 
+#Attach class names and reshape to long form 
+df1 <- cbind(grid_X1, setNames(as.data.frame(probs_X1),c("alpha","beta","rho")))
 
+df1$Detector <- factor(df1$X3, levels = c(0,1), labels = c("Type B","Type A"))
 
+df1_long <- pivot_longer(df1, cols = c("alpha","beta","rho"), names_to= "Class",
+                         values_to = "Probability")
+
+df2 <- cbind(grid_X2, setNames(as.data.frame(probs_X2), c("alpha","beta","rho")))
+
+df2$Detector <- factor(df2$X3, levels = c(0,1), labels = c("Type B","Type A"))
+
+df2_long <- pivot_longer(df2,cols= c("alpha","beta","rho"),names_to= "Class",
+                         values_to = "Probability")
+
+#Plot response curves for X1 
+ggplot(df1_long, aes(x = X1, y = Probability, color = Class)) + 
+  geom_line(size = 1) + facet_wrap(~ Detector) + labs(title = "Response Curves: P(class) vs X1 by Detector Type",x= "X1", y= "Predicted Probability",
+                                                      color ="Class")+
+  theme_minimal()+theme(aspect.ratio = 1)
 ```
 
 ```{r}
 #| label: fig-X2
 #| fig-cap: "This figure shows two faceted line plots showing how the neural network’s predicted class probabilities vary as X2 changes, separately for Detector Type A (X3 = 1) and Type B (X3 = 0)."
 
-# 6) Reshape and plot for X2
-plot_data_X2 <- bind_rows(
-  transform(df2_A, Detector="Type A"),
-  transform(df2_B, Detector="Type B")
-) %>%
-  pivot_longer(cols = c("alpha","beta","rho"),
-               names_to  = "Class",
-               values_to = "Probability")
-
-ggplot(plot_data_X2, aes(x = X2, y = Probability, color = Class)) +
-  geom_line(size=1) +
-  facet_wrap(~ Detector) +
-  labs(title = "Response Curves: P(class) vs X2 by Detector",
-       x = "X2", y = "Predicted Probability") +
-  theme_minimal() +
+#Plot response curves for X2
+ggplot(df2_long, aes(x = X2, y = Probability, color = Class)) +
+  geom_line(size = 1) + facet_wrap(~ Detector) +labs(title = "Response Curves: P(class) vs X2 by Detector Type",x= "X2",y= "Predicted Probability", 
+                                                     color = "Class")+
+  theme_minimal()+
   theme(aspect.ratio = 1)
+
 ```
 
 # i)
 
 One practical advantage of using an AF network over a standard feed forward neural network is that AF networks automatically discover important transformations of the input variables, such as quadratic terms and interactions, without requiring manual feature engineering. In our Prac, we saw that the AF network easily captured structured nonlinear relationships between X1, X2, and the class probabilities $\alpha$, $\beta$, $\rho$ — for example, the probability of class $\rho$ showed a clear nonlinear upward trend with X1, even though no complex hidden layers were manually designed. This shows that the AF network can model nonlinearity efficiently with simple transformations.
 
-Another advantage is interpretability. Because the AF network was designed to learn specific types of feature mappings (rather than arbitrary complex patterns), we could directly observe how the inputs influenced the outputs through the plotted response curves. For instance, the nearly linear but slightly sloped trends for $\alpha$ and $\beta$ made it clear how X1 and X2 affected the probabilities. In contrast, a standard feed forward network would have created highly entangled hidden features, making it difficult to extract such insights. Finally, by constraining the feature space, the AF network also helped prevent over fitting, which is especially important when working with limited training data, as we had in this Prac.
+Another key benefit is interpretability. Because the AF‐network augments the feature space in a controlled way, we can directly read off how each input drives each class probability by plotting response curves. Part (h) showed that the entire family of red, green and blue curves for Detector A lies almost perfectly on top of the matching curves for Detector B. Therefore, flipping X3 from 0-\>1 produces no shift in P($\alpha$), P($\beta$) or P($\rho$). This tells us that the model is truly exploiting the nonlinear structure in X₁,X₂. And once those two coordinates are accounted for, the detector flag carries no extra information and is effectively ignored by the fitted network. By, constraining the feature space to just those learned augmentations, the AF‐network also guards against over-fitting which is crucial when you have only a few hundred labelled particles.
