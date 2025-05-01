@@ -64,6 +64,35 @@ legend("topright",
 ############################################################
 
 
+# Step 2: Prepare the training and validation datasets
+X_train <- as.matrix(train_data[, 1:3])  # Input features
+Y_train <- as.matrix(train_data[, 4:6])  # Response variables (one-hot encoded)
+
+X_valid <- as.matrix(valid_data[, 1:3])  # Input features
+Y_valid <- as.matrix(valid_data[, 4:6])  # Response variables (one-hot encoded)
+
+# Step 3: Define the objective function with regularization
+v=0.01
+bj_pen <- function(pars) {
+  result <- af_forward(X_train, Y_train, theta, m, v)
+  return(result$obj)
+}
+
+theta_rand = runif(npars,-1,1)
+obj_pen(theta_rand)
+
+res_opt = nlm(obj_pen,theta_rand,iterlim = 1000)
+res_opt
+
+# Step 4: Grid search over regularization parameter nu
+n_nu <- 15
+validation_errors = rep(NA,n_nu)
+v_values <- exp(seq(-6, 2, length.out = n_nu))
+#validation_errors <- numeric(length(v_values))
+
+for (i in 1:n_nu) {
+  v <- v_values[i]
+  res_opt = nlm(obj_pen,theta_rand,iterlim = 1000)
   
   theta_rand <- runif(npars, -1, 1)
   
