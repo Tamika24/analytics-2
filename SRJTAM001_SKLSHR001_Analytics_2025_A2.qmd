@@ -26,6 +26,7 @@ format:
         % if you have lists (itemize/enumerate), remove their extra gaps
         \usepackage{enumitem}
         \setlist{nosep}
+code-overflow: wrap
 ---
 
 ```{r, warning=FALSE, message=FALSE}
