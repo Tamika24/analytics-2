@@ -253,7 +253,7 @@ plot(v_values, validation_errors, type = 'b', log = "x", pch = 16,
      asp = 1)
 abline(v = best_v, col = "red", lty = 2)
 points(best_v, validation_errors[best_i], col = "red", pch = 16)
-legend("bottomright",
+legend("topright",
        legend = paste0("Chosen v=", signif(best_v,3)),
        col    = "red", lty = 2, pch = 16, bty = "n")
 
