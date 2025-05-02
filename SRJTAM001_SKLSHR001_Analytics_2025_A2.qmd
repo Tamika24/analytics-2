@@ -228,7 +228,7 @@ theta_rand = runif(npars,-1,1)
 res_opt = nlm(obj_pen,theta_rand,iterlim = 1000)
 
 # Step 4: Grid search over regularization parameter nu
-n_v <- 25
+n_v <- 10
 validation_errors = rep(NA,n_v)
 v_values <- exp(seq(-10, 1, length.out = n_v))
 #validation_errors <- numeric(length(v_values))
@@ -246,7 +246,7 @@ best_i  <- which.min(validation_errors)
 best_v <- v_values[best_i]
 
 # Step 5: Plot validation error vs v
-plot(v_values, validation_errors, type = 'b', log = "x", pch = 16,
+plot(v_values, validation_errors, type = 'b', log='x',pch = 16,
      xlab = expression(nu),
      ylab = "Validation Cross-Entropy Loss",
      main = "Validation Loss vs Regularization",
