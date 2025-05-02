@@ -188,7 +188,7 @@ af_forward <- function(X, Y, theta, m, v)
 
 # g)
 
-```{r, warning=FALSE, message=TRUE, cache=TRUE}
+```{r, warning=FALSE, message=FALSE, cache=TRUE}
 #| echo: true
 #| label: fig-valid
 #| fig-cap: "Validation cross-entropy loss on the held-out set plotted against the L2-regularization parameter v(log-scaled) for an AF-network with m=4. The red dashed line marks the chosen optimal v. We use a logarithmic scale because v ranges over several orders of magnitude; the log‐scale stretches out the small v region so that the classic U‐shaped trade‐off between under‐ and over‐regularization becomes visible."
@@ -263,7 +263,7 @@ The optimal regularization parameter is `r round(best_v, 4)` as it minimizes the
 
 # h)
 
-```{r, warning=FALSE, message=TRUE}
+```{r, warning=FALSE, message=FALSE, tidy=FALSE, tidy.opts=list(width.cutoff=40)}
 #| echo: true
 #| label: fig-X1
 #| fig-cap: "This figure shows two faceted line plots showing how the neural network’s predicted class probabilities vary as X1 changes, separately for Detector Type A (X3 = 1) and Type B (X3 = 0)."
@@ -319,20 +319,31 @@ df2_long <- pivot_longer(df2,cols= c("alpha","beta","rho"),names_to= "Class",
 ggplot(df1_long, aes(x = X1, y = Probability, color = Class)) + 
   geom_line(size = 1) + 
   facet_wrap(~ Detector) + 
-  labs(title = "Response Curves: P(class) vs X1 by Detector Type",x= "X1", y= "Predicted Probability", color ="Class") + 
+  labs(
+    title = "Response Curves: P(class) vs X1 by Detector Type",
+       x= "X1",
+       y= "Predicted Probability",
+       color ="Class"
+       ) + 
   theme_minimal() +
   theme(aspect.ratio = 1)
 ```
 
-```{r}
+```{r, tidy=FALSE, tidy.opts=list(width.cutoff=40)}
 #| label: fig-X2
+#| echo: true
 #| fig-cap: "This figure shows two faceted line plots showing how the neural network’s predicted class probabilities vary as X2 changes, separately for Detector Type A (X3 = 1) and Type B (X3 = 0)."
 
 #Plot response curves for X2
 ggplot(df2_long, aes(x = X2, y = Probability, color = Class)) + 
   geom_line(size = 1) + 
   facet_wrap(~ Detector) + 
-  labs(title = "Response Curves: P(class) vs X2 by Detector Type",x= "X2",y= "Predicted Probability", color = "Class") + 
+  labs(
+    title = "Response Curves: P(class) vs X2 by Detector Type",
+    x= "X2",
+    y= "Predicted Probability", 
+    color = "Class"
+    ) + 
   theme_minimal() + 
   theme(aspect.ratio = 1)
 
